@@ -22,7 +22,6 @@ type SiteData = {
 export default function SiteViewer({ initialData, id }: { initialData: SiteData | null, id: string }) {
     const [data, setData] = useState<SiteData | null>(initialData);
     const [loading, setLoading] = useState(!initialData);
-    const [loading, setLoading] = useState(!initialData);
     // const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
     const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
 
@@ -45,7 +44,6 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
             const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
             const customerKey = "ANONYMOUS";
             try {
-                const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
                 const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
                 paymentWidgetRef.current = loadedWidget;
                 // setPaymentWidget(loadedWidget);
