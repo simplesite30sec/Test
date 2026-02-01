@@ -175,7 +175,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 orderName: "1년 이용권 (Premium)",
                 totalAmount: finalPrice, // Use discounted price
                 currency: "CURRENCY_KRW",
-                payMethod: "CARD",
+                payMethod: "EASY_PAY",
                 customer: {
                     fullName: data?.name || "고객",
                     email: "customer@example.com",
