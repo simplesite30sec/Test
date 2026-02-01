@@ -44,9 +44,18 @@ export default function DashboardPage() {
     // Add-on Store State
     const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
     const [showStore, setShowStore] = useState(false);
-    const [siteAddons, setSiteAddons] = useState<string[]>([]); // Addons for selected site
+    const [siteAddons, setSiteAddons] = useState<string[]>([]); // Active addons for selected site
+    const [purchasedAddons, setPurchasedAddons] = useState<Record<string, { type: string, purchase_type: string, coupon_code?: string }>>({}); // Purchased addons with details
     const [notificationEmail, setNotificationEmail] = useState(''); // For inquiry addon
     const [allSiteAddons, setAllSiteAddons] = useState<Record<string, string[]>>({}); // siteId -> addonTypes
+
+    // Payment Modal State
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedAddon, setSelectedAddon] = useState<{ id: string, name: string, price: number } | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'coupon'>('card');
+    const [couponCode, setCouponCode] = useState('');
+    const [couponMessage, setCouponMessage] = useState('');
+    const [couponValid, setCouponValid] = useState(false);
 
     const availableAddons = [
         { id: 'inquiry', name: '1:1 문의하기 폼', price: 3000, desc: '고객의 문의를 바로 받아보세요.' },
@@ -58,10 +67,24 @@ export default function DashboardPage() {
     const openStore = async (siteId: string) => {
         setSelectedSiteId(siteId);
         setShowStore(true);
-        // Fetch current addons (including is_active state)
-        const { data } = await supabase.from('site_addons').select('addon_type, config, is_active').eq('site_id', siteId);
+        // Fetch current addons (including is_active state and purchase info)
+        const { data } = await supabase.from('site_addons').select('addon_type, config, is_active, is_purchased, purchase_type, coupon_code').eq('site_id', siteId);
         if (data) {
             setSiteAddons(data.filter(d => d.is_active).map(d => d.addon_type));
+
+            // Build purchased addons map
+            const purchased: Record<string, { type: string, purchase_type: string, coupon_code?: string }> = {};
+            data.forEach(addon => {
+                if (addon.is_purchased) {
+                    purchased[addon.addon_type] = {
+                        type: addon.purchase_type,
+                        purchase_type: addon.purchase_type,
+                        coupon_code: addon.coupon_code
+                    };
+                }
+            });
+            setPurchasedAddons(purchased);
+
             const inquiryAddon = data.find(d => d.addon_type === 'inquiry');
             if (inquiryAddon?.config?.notification_email) {
                 setNotificationEmail(inquiryAddon.config.notification_email);
@@ -101,36 +124,48 @@ export default function DashboardPage() {
         }
     };
 
-    // Install new addon
-    const handleInstallAddon = async (addonId: string, price: number) => {
+    // Install new addon - opens payment modal for paid sites
+    const handleInstallAddon = async (addon: { id: string, name: string, price: number }) => {
         if (!selectedSiteId) return;
 
         const site = sites.find(s => s.id === selectedSiteId) || allSites.find(s => s.id === selectedSiteId);
         if (!site) return;
 
         // Validation for inquiry addon
-        if (addonId === 'inquiry' && !notificationEmail) {
+        if (addon.id === 'inquiry' && !notificationEmail) {
             alert('알림 받을 이메일을 입력해주세요.');
             return;
         }
 
-        if (site.is_paid) {
-            // Owned site -> Need Payment (Mock for now)
-            if (!confirm(`${price.toLocaleString()}원 결제가 필요합니다. (현재는 모의 결제)`)) return;
-        } else {
-            // Trial -> Free
-            alert('무료 체험 기간 중에는 무료로 추가됩니다!');
+        // Trial sites -> Free installation
+        if (!site.is_paid) {
+            await installAddonFree(addon.id);
+            return;
         }
+
+        // Paid sites -> Show payment modal
+        setSelectedAddon(addon);
+        setShowPaymentModal(true);
+        setCouponCode('');
+        setCouponMessage('');
+        setCouponValid(false);
+        setPaymentMethod('card');
+    };
+
+    // Free installation for trial sites
+    const installAddonFree = async (addonId: string) => {
+        if (!selectedSiteId) return;
 
         const { error } = await supabase.from('site_addons').insert({
             site_id: selectedSiteId,
             addon_type: addonId,
             config: addonId === 'inquiry' ? { notification_email: notificationEmail } : {},
-            is_active: true
+            is_active: true,
+            is_purchased: false // Free trial
         });
 
         if (!error) {
-            alert('기능이 추가되었습니다!');
+            alert('무료 체험 기간 중에는 무료로 추가됩니다!');
             setSiteAddons([...siteAddons, addonId]);
             setAllSiteAddons(prev => ({
                 ...prev,
@@ -140,6 +175,84 @@ export default function DashboardPage() {
             alert('작업 실패');
         }
     };
+
+    // Verify coupon code
+    const handleVerifyCoupon = async () => {
+        if (!couponCode.trim()) {
+            setCouponMessage('쿠폰 코드를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/verify-addon-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ couponCode, addonType: selectedAddon?.id })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setCouponMessage(data.message);
+                setCouponValid(true);
+            } else {
+                setCouponMessage(data.error || '쿠폰 검증 실패');
+                setCouponValid(false);
+            }
+        } catch (e) {
+            console.error(e);
+            setCouponMessage('쿠폰 검증 중 오류가 발생했습니다.');
+            setCouponValid(false);
+        }
+    };
+
+    // Complete addon purchase
+    const handleCompletePurchase = async () => {
+        if (!selectedSiteId || !selectedAddon) return;
+
+        // Validate payment method
+        if (paymentMethod === 'coupon' && !couponValid) {
+            alert('유효한 쿠폰을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const { error } = await supabase.from('site_addons').insert({
+                site_id: selectedSiteId,
+                addon_type: selectedAddon.id,
+                config: selectedAddon.id === 'inquiry' ? { notification_email: notificationEmail } : {},
+                is_active: true,
+                is_purchased: true,
+                purchase_type: paymentMethod,
+                purchased_at: new Date().toISOString(),
+                coupon_code: paymentMethod === 'coupon' ? couponCode : null
+            });
+
+            if (!error) {
+                alert(paymentMethod === 'coupon' ? '쿠폰으로 구매 완료!' : '결제 완료! (모의 결제)');
+                setSiteAddons([...siteAddons, selectedAddon.id]);
+                setPurchasedAddons(prev => ({
+                    ...prev,
+                    [selectedAddon.id]: {
+                        type: paymentMethod,
+                        purchase_type: paymentMethod,
+                        coupon_code: paymentMethod === 'coupon' ? couponCode : undefined
+                    }
+                }));
+                setAllSiteAddons(prev => ({
+                    ...prev,
+                    [selectedSiteId]: Array.from(new Set([...(prev[selectedSiteId] || []), selectedAddon.id]))
+                }));
+                setShowPaymentModal(false);
+            } else {
+                alert('구매 실패: ' + error.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('구매 중 오류가 발생했습니다.');
+        }
+    };
+
 
     // Update addon settings (for inquiry email)
     const handleUpdateSettings = async (addonId: string) => {
@@ -634,15 +747,32 @@ export default function DashboardPage() {
                                 <div className="grid grid-cols-1 gap-4">
                                     {availableAddons.map(addon => {
                                         const isInstalled = siteAddons.includes(addon.id);
+                                        const isPurchased = purchasedAddons[addon.id];
                                         return (
                                             <div key={addon.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex-1">
                                                         <h4 className="font-bold text-lg text-gray-900">{addon.name}</h4>
                                                         <p className="text-sm text-gray-500 mb-2">{addon.desc}</p>
-                                                        <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
-                                                            {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
-                                                        </span>
+
+                                                        {/* Purchase Status Badge */}
+                                                        {isPurchased ? (
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                {isPurchased.purchase_type === 'coupon' ? (
+                                                                    <span className="inline-block bg-purple-50 text-purple-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                                        🎟️ 소유 중 (쿠폰: {isPurchased.coupon_code})
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-block bg-green-50 text-green-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                                        💎 소유 중 (결제)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                                {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
+                                                            </span>
+                                                        )}
                                                     </div>
 
                                                     {/* Action Buttons */}
@@ -671,7 +801,7 @@ export default function DashboardPage() {
                                                             </>
                                                         ) : (
                                                             <button
-                                                                onClick={() => handleInstallAddon(addon.id, addon.price)}
+                                                                onClick={() => handleInstallAddon(addon)}
                                                                 className="px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95"
                                                             >
                                                                 <Plus size={18} /> 추가하기
@@ -700,6 +830,112 @@ export default function DashboardPage() {
                                 <div className="mt-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-sm text-yellow-800">
                                     <h5 className="font-bold flex items-center gap-2 mb-1"><AlertCircle size={14} /> 안내사항</h5>
                                     <p>무료 체험 기간(소유권 미보유) 중에는 모든 애드온을 <b>무료</b>로 설치하여 테스트할 수 있습니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Payment Modal */}
+                {showPaymentModal && selectedAddon && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-fadeIn">
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    🛍️ 애드온 구매
+                                </h3>
+                                <p className="text-blue-100 text-sm mt-1">{selectedAddon.name}</p>
+                            </div>
+
+                            <div className="p-6">
+                                {/* Price Display */}
+                                <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center">
+                                    <p className="text-sm text-gray-500">가격</p>
+                                    <p className="text-3xl font-bold text-gray-900">{selectedAddon.price.toLocaleString()}원</p>
+                                </div>
+
+                                {/* Payment Method Selection */}
+                                <div className="mb-6">
+                                    <label className="block text-sm font-bold text-gray-700 mb-3">💳 결제 방식 선택</label>
+
+                                    <div className="space-y-3">
+                                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <input
+                                                type="radio"
+                                                name="paymentMethod"
+                                                value="card"
+                                                checked={paymentMethod === 'card'}
+                                                onChange={(e) => setPaymentMethod(e.target.value as 'card' | 'coupon')}
+                                                className="w-4 h-4"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="font-bold text-gray-900">카드 결제</p>
+                                                <p className="text-xs text-gray-500">{selectedAddon.price.toLocaleString()}원 (모의 결제)</p>
+                                            </div>
+                                        </label>
+
+                                        <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'coupon' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <input
+                                                type="radio"
+                                                name="paymentMethod"
+                                                value="coupon"
+                                                checked={paymentMethod === 'coupon'}
+                                                onChange={(e) => setPaymentMethod(e.target.value as 'card' | 'coupon')}
+                                                className="w-4 h-4"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="font-bold text-gray-900">쿠폰 사용</p>
+                                                <p className="text-xs text-gray-500">할인 쿠폰으로 무료 사용</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Coupon Input (only shown when coupon is selected) */}
+                                {paymentMethod === 'coupon' && (
+                                    <div className="mb-6">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">쿠폰 코드 입력</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="쿠폰 코드를 입력하세요"
+                                                value={couponCode}
+                                                onChange={(e) => {
+                                                    setCouponCode(e.target.value);
+                                                    setCouponMessage('');
+                                                    setCouponValid(false);
+                                                }}
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                            />
+                                            <button
+                                                onClick={handleVerifyCoupon}
+                                                className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
+                                            >
+                                                확인
+                                            </button>
+                                        </div>
+                                        {couponMessage && (
+                                            <p className={`text-sm mt-2 ${couponValid ? 'text-green-600' : 'text-red-600'}`}>
+                                                {couponMessage}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowPaymentModal(false)}
+                                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition"
+                                    >
+                                        취소
+                                    </button>
+                                    <button
+                                        onClick={handleCompletePurchase}
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition shadow-md"
+                                    >
+                                        구매하기
+                                    </button>
                                 </div>
                             </div>
                         </div>
