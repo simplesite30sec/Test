@@ -599,7 +599,7 @@ export default function DashboardPage() {
                                                     : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
                                                     }`}
                                             >
-                                                {site.status === 'paused' ? <><Play size={16} /> 재개</> : <><Pause size={16} /> 일시 정지</>}
+                                                {site.status === 'paused' ? <><Play size={16} /> 재개</> : <><Pause size={16} /> 일시 게시 중지</>}
                                             </button>
                                         )}
                                         <button

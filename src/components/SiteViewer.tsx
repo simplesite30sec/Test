@@ -58,20 +58,25 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [activeAddons, setActiveAddons] = useState<string[]>([]);
     const [canManage, setCanManage] = useState(false); // Check if current user is owner
+    const [isEditMode, setIsEditMode] = useState(false); // Check if in edit mode
 
     // Lightbox state for image expansion
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+    // Check edit mode from URL
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editParam = urlParams.get('edit');
+        if (editParam) {
+            setIsEditMode(true);
+        }
+    }, []);
 
     // Check ownership and fetch addons
     useEffect(() => {
         const checkOwnershipAndAddons = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user && data && id) {
-                // Check if user owns this site (simple check, or rely on RLS)
-                // We can check if user ID matches (not stored in SiteData type fully here, but passed in props maybe?)
-                // For now, let's just assume we can check via Supabase if needed, or pass isOwner prop.
-                // Actually, data currently doesn't have user_id in the type defined in this file (it does in DB).
-                // Let's just fetch site details from DB to be sure.
                 const { data: site } = await supabase.from('sites').select('user_id').eq('id', id).single();
                 if (site && site.user_id === user.id) {
                     setCanManage(true);
@@ -648,10 +653,10 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                     <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
                                                         {item.image_url ? (
                                                             <div
-                                                                className="h-64 overflow-hidden bg-gray-200 cursor-pointer"
+                                                                className="h-64 overflow-hidden bg-gray-200 cursor-pointer flex items-center justify-center"
                                                                 onClick={() => setLightboxImage(item.image_url)}
                                                             >
-                                                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" />
+                                                                <img src={item.image_url} alt={item.title} className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500" />
                                                             </div>
                                                         ) : (
                                                             <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400"><span className="text-sm">이미지 없음</span></div>
@@ -750,17 +755,20 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 })()}
             </main>
 
-            {/* Actions - Only show for site owner */}
-            {canManage && (
+            {/* Actions - Only show for site owner in edit mode */}
+            {canManage && isEditMode && (
                 <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
-                    <button
-                        onClick={() => setShowPaymentModal(true)}
-                        className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
-                        title="결제 및 게시"
-                    >
-                        <span className="font-bold hidden group-hover:block whitespace-nowrap">결제 & 사이트 게시 (9,900원)</span>
-                        <Star size={24} className="fill-white" />
-                    </button>
+                    {/* Only show payment button if not paid */}
+                    {!isPaid && (
+                        <button
+                            onClick={() => setShowPaymentModal(true)}
+                            className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
+                            title="결제 및 게시"
+                        >
+                            <span className="font-bold hidden group-hover:block whitespace-nowrap">결제 & 사이트 게시 (9,900원)</span>
+                            <Star size={24} className="fill-white" />
+                        </button>
+                    )}
 
                     <a
                         href={`/build?edit=${id}`}
@@ -770,9 +778,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         <Edit size={24} />
                     </a>
                 </div>
-            )
-
-            }
+            )}
 
             {/* Lightbox Modal for Image Expansion */}
             {lightboxImage && (
