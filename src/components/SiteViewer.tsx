@@ -23,6 +23,7 @@ type SiteData = {
     expires_at?: string;
     is_paid?: boolean;
     status?: 'draft' | 'active' | 'paused';
+    section_order?: string[];
 };
 
 type SiteViewerProps = {
@@ -568,184 +569,142 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             </header>
 
             <main>
-                {/* Hero Section */}
-                <section
-                    className="relative h-[80vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden"
-                    style={sectionStyle}
-                >
-                    {hero_image_url && (
-                        <div
-                            className="absolute inset-0 bg-cover bg-center z-0"
-                            style={{ backgroundImage: `url(${hero_image_url})` }}
-                        />
-                    )}
-                    <div className="absolute inset-0 bg-black z-10" style={{ opacity: overlayOpacity }} />
+                {/* Dynamic Section Rendering */}
+                {(() => {
+                    const order = data?.section_order || ['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact'];
 
-                    <div className="relative z-20 max-w-4xl mx-auto text-white">
-                        <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-tight drop-shadow-lg">
-                            {slogan}
-                        </h2>
-                        {description && (
-                            <p className="text-xl md:text-2xl opacity-90 font-light max-w-2xl mx-auto mb-10 drop-shadow-md">
-                                {description.slice(0, 60)}...
-                            </p>
-                        )}
-                        <div className="h-4"></div>
-                    </div>
-                </section>
-
-                {/* About Section */}
-                {description && (
-                    <section className="py-24 px-6">
-                        <div className="max-w-3xl mx-auto">
-                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 block">About Us</span>
-                            <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap">
-                                {description}
-                            </p>
-                        </div>
-                    </section>
-                )}
-
-                {/* Portfolio / Menu Section (Carousel) */}
-                {portfolio && portfolio.length > 0 && (
-                    <section id="menu" className="py-24 bg-gray-50 overflow-hidden">
-                        <div className="max-w-6xl mx-auto px-6">
-                            <h3 className="text-3xl font-bold mb-12 text-center">Menu / Portfolio</h3>
-
-                            {/* Carousel Container */}
-                            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
-                                {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
-                                    <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
-                                        {item.image_url ? (
-                                            <div className="h-64 overflow-hidden bg-gray-200">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={item.image_url}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover transform group-hover:scale-105 transition duration-500"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                                                <span className="text-sm">이미지 없음</span>
-                                            </div>
+                    // Render Functions for each section
+                    const renderSection = (section: string) => {
+                        switch (section) {
+                            case 'hero':
+                                return (
+                                    <section key="hero" className="relative h-[80vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden" style={sectionStyle}>
+                                        {hero_image_url && (
+                                            <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: `url(${hero_image_url})` }} />
                                         )}
-                                        <div className="p-6">
-                                            <h4 className="font-bold text-xl mb-2">{item.title}</h4>
-                                            <p className="text-gray-600 text-sm line-clamp-3">{item.desc}</p>
+                                        <div className="absolute inset-0 bg-black z-10" style={{ opacity: overlayOpacity }} />
+                                        <div className="relative z-20 max-w-4xl mx-auto text-white">
+                                            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-tight drop-shadow-lg">{slogan}</h2>
+                                            {description && (
+                                                <p className="text-xl md:text-2xl opacity-90 font-light max-w-2xl mx-auto mb-10 drop-shadow-md">
+                                                    {description.slice(0, 60)}...
+                                                </p>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <p className="text-center text-gray-400 text-sm mt-4 md:hidden">좌우로 넘겨보세요</p>
-                        </div>
-                    </section>
-                )}
-
-                {/* Reviews Section */}
-                {reviews && reviews.length > 0 && (
-                    <section id="reviews" className="py-24 px-6 bg-white">
-                        <div className="max-w-5xl mx-auto">
-                            <h3 className="text-3xl font-bold mb-12 text-center">Customer Reviews</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {reviews.map((review: { id: string; name: string; content: string; rating: number }, idx: number) => (
-                                    <div key={idx} className="p-8 bg-gray-50 rounded-2xl relative border border-gray-100">
-                                        <Quote className="text-blue-200 mb-4 absolute top-6 right-6" size={40} />
-                                        <div className="flex gap-1 mb-4">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={16} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                                            ))}
+                                    </section>
+                                );
+                            case 'about':
+                                return description ? (
+                                    <section key="about" className="py-24 px-6">
+                                        <div className="max-w-3xl mx-auto">
+                                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 block">About Us</span>
+                                            <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap">{description}</p>
                                         </div>
-                                        <p className="text-gray-700 mb-6 leading-relaxed">&quot;{review.content}&quot;</p>
-                                        <p className="font-bold text-gray-900 border-t border-gray-200 pt-4 text-sm">{review.name}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                )}
+                                    </section>
+                                ) : null;
+                            case 'menu':
+                                return portfolio && portfolio.length > 0 ? (
+                                    <section key="menu" id="menu" className="py-24 bg-gray-50 overflow-hidden">
+                                        <div className="max-w-6xl mx-auto px-6">
+                                            <h3 className="text-3xl font-bold mb-12 text-center">Menu / Portfolio</h3>
+                                            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
+                                                {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
+                                                    <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
+                                                        {item.image_url ? (
+                                                            <div className="h-64 overflow-hidden bg-gray-200">
+                                                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400"><span className="text-sm">이미지 없음</span></div>
+                                                        )}
+                                                        <div className="p-6">
+                                                            <h4 className="font-bold text-xl mb-2">{item.title}</h4>
+                                                            <p className="text-gray-600 text-sm line-clamp-3">{item.desc}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <p className="text-center text-gray-400 text-sm mt-4 md:hidden">좌우로 넘겨보세요</p>
+                                        </div>
+                                    </section>
+                                ) : null;
+                            case 'reviews':
+                                return reviews && reviews.length > 0 ? (
+                                    <section key="reviews" id="reviews" className="py-24 px-6 bg-white">
+                                        <div className="max-w-5xl mx-auto">
+                                            <h3 className="text-3xl font-bold mb-12 text-center">Customer Reviews</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {reviews.map((review: { id: string; name: string; content: string; rating: number }, idx: number) => (
+                                                    <div key={idx} className="p-8 bg-gray-50 rounded-2xl relative border border-gray-100">
+                                                        <Quote className="text-blue-200 mb-4 absolute top-6 right-6" size={40} />
+                                                        <div className="flex gap-1 mb-4">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star key={i} size={16} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                                            ))}
+                                                        </div>
+                                                        <p className="text-gray-700 mb-6 leading-relaxed">&quot;{review.content}&quot;</p>
+                                                        <p className="font-bold text-gray-900 border-t border-gray-200 pt-4 text-sm">{review.name}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </section>
+                                ) : null;
+                            case 'qna':
+                                return activeAddons.includes('qna') ? <QnABoard key="qna" siteId={id} canManage={canManage} /> : null;
+                            case 'inquiry':
+                                return activeAddons.includes('inquiry') ? <InquiryForm key="inquiry" siteId={id} /> : null;
+                            case 'contact':
+                                return (
+                                    <section key="contact" id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">
+                                        <div className="max-w-4xl mx-auto text-center">
+                                            <h3 className="text-3xl font-bold mb-12">Contact & Location</h3>
+                                            {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube || social_links.email) && (
+                                                <div className="flex justify-center gap-6 mb-12">
+                                                    {social_links.instagram && <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-pink-600 transition"><Instagram /></a>}
+                                                    {social_links.facebook && <a href={social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-blue-600 transition"><Facebook /></a>}
+                                                    {social_links.blog && <a href={social_links.blog} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-green-600 transition"><MessageCircle /></a>}
+                                                    {social_links.youtube && <a href={social_links.youtube} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-red-600 transition"><Youtube /></a>}
+                                                    {social_links.email && <a href={`mailto:${social_links.email}`} className="p-3 bg-white rounded-full shadow hover:text-gray-600 transition"><MessageCircle /></a>}
+                                                </div>
+                                            )}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-2xl mx-auto mb-12">
+                                                {phones.length > 0 && (
+                                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                                                        <Phone className="mb-4 text-gray-400" size={32} />
+                                                        <h4 className="font-bold text-lg mb-2">Phone</h4>
+                                                        <div className="space-y-1">{phones.map((p, i) => <p key={i} className="text-xl font-semibold">{p}</p>)}</div>
+                                                    </div>
+                                                )}
+                                                {address && (
+                                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                                                        <MapPin className="mb-4 text-gray-400" size={32} />
+                                                        <h4 className="font-bold text-lg mb-2">Location</h4>
+                                                        <p className="text-lg font-medium break-keep">{address}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {(map_links?.naver || map_links?.kakao) && (
+                                                <div className="flex flex-col items-center gap-6 mb-12 w-full">
+                                                    <div className="flex justify-center gap-4">
+                                                        {map_links.naver && <a href={map_links.naver} target="_blank" rel="noopener noreferrer" className="bg-[#03C75A] text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">N 네이버 지도</a>}
+                                                        {map_links.kakao && <a href={map_links.kakao} target="_blank" rel="noopener noreferrer" className="bg-[#FAE100] text-[#3b1e1e] px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">K 카카오맵</a>}
+                                                    </div>
+                                                    <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+                                                        {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0 text-gray-400 flex items-center justify-center bg-gray-50" title="Naver Map" allowFullScreen /> : <iframe src={map_links.kakao} className="w-full h-full border-0 text-gray-400 flex items-center justify-center bg-gray-50" title="Kakao Map" allowFullScreen />}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </section>
+                                );
+                            default:
+                                return null;
+                        }
+                    };
 
-                {/* Add-ons Section */}
-                {activeAddons.includes('qna') && (
-                    <QnABoard siteId={id} canManage={canManage} />
-                )}
-                {activeAddons.includes('inquiry') && (
-                    <InquiryForm siteId={id} />
-                )}
-
-                {/* Contact / CTA Section */}
-                <section id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">
-                    <div className="max-w-4xl mx-auto text-center">
-                        <h3 className="text-3xl font-bold mb-12">Contact & Location</h3>
-
-                        {/* Social Links */}
-                        {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube) && (
-                            <div className="flex justify-center gap-6 mb-12">
-                                {social_links.instagram && (
-                                    <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-pink-600 transition"><Instagram /></a>
-                                )}
-                                {social_links.facebook && (
-                                    <a href={social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-blue-600 transition"><Facebook /></a>
-                                )}
-                                {social_links.blog && (
-                                    <a href={social_links.blog} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-green-600 transition"><MessageCircle /></a>
-                                )}
-                                {social_links.youtube && (
-                                    <a href={social_links.youtube} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-red-600 transition"><Youtube /></a>
-                                )}
-                                {social_links.email && (
-                                    <a href={`mailto:${social_links.email}`} className="p-3 bg-white rounded-full shadow hover:text-gray-600 transition"><MessageCircle /></a>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-2xl mx-auto mb-12">
-                            {phones.length > 0 && (
-                                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                                    <Phone className="mb-4 text-gray-400" size={32} />
-                                    <h4 className="font-bold text-lg mb-2">Phone</h4>
-                                    <div className="space-y-1">
-                                        {phones.map((p, i) => (
-                                            <p key={i} className="text-xl font-semibold">{p}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {address && (
-                                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                                    <MapPin className="mb-4 text-gray-400" size={32} />
-                                    <h4 className="font-bold text-lg mb-2">Location</h4>
-                                    <p className="text-lg font-medium break-keep">{address}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Map Links & Iframe */}
-                        {(map_links?.naver || map_links?.kakao) && (
-                            <div className="flex flex-col items-center gap-6 mb-12 w-full">
-                                <div className="flex justify-center gap-4">
-                                    {map_links.naver && (
-                                        <a href={map_links.naver} target="_blank" rel="noopener noreferrer" className="bg-[#03C75A] text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
-                                            N 네이버 지도
-                                        </a>
-                                    )}
-                                    {map_links.kakao && (
-                                        <a href={map_links.kakao} target="_blank" rel="noopener noreferrer" className="bg-[#FAE100] text-[#3b1e1e] px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
-                                            K 카카오맵
-                                        </a>
-                                    )}
-                                </div>
-                                <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
-                                    {map_links.naver ? (
-                                        <iframe src={map_links.naver} className="w-full h-full border-0" title="Naver Map" allowFullScreen />
-                                    ) : map_links.kakao ? (
-                                        <iframe src={map_links.kakao} className="w-full h-full border-0" title="Kakao Map" allowFullScreen />
-                                    ) : null}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </section>
+                    return order.map(section => renderSection(section));
+                })()}
             </main>
 
             {/* Actions */}

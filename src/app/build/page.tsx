@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard } from 'lucide-react';
+import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -87,6 +87,18 @@ function HomeContent() {
         email: ''
     });
 
+    // Section Order State
+    const [sectionOrder, setSectionOrder] = useState<string[]>(['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact']);
+    const SECTION_LABELS: Record<string, string> = {
+        hero: '메인(Hero) 섹션',
+        about: '소개(About) 섹션',
+        menu: '메뉴/포트폴리오',
+        reviews: '고객 후기',
+        qna: 'Q&A 게시판 (애드온)',
+        inquiry: '문의하기 폼 (애드온)',
+        contact: '연락처/지도'
+    };
+
     const [isPaid, setIsPaid] = useState(false);
 
     // Load Data
@@ -111,6 +123,7 @@ function HomeContent() {
 
                 if (siteData) {
                     setIsPaid(siteData.is_paid || false);
+                    if (siteData.section_order) setSectionOrder(siteData.section_order as string[]);
 
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
@@ -279,6 +292,7 @@ function HomeContent() {
                 social_links: socialLinks, // includes email
                 reviews: reviews,
                 portfolio: portfolioWithImages,
+                section_order: sectionOrder
             };
 
             try {
@@ -529,6 +543,58 @@ function HomeContent() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </section>
+
+                {/* 6. Section Order */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold border-b pb-2">6. 섹션 노출 순서</h2>
+                    <p className="text-sm text-gray-500 mb-4">화살표를 눌러 섹션의 순서를 변경하세요.</p>
+
+                    <div className="space-y-3">
+                        {sectionOrder.map((section, index) => (
+                            <div key={section} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-6 h-6 flex items-center justify-center bg-white rounded-full text-xs font-bold text-gray-400 border border-gray-200">
+                                        {index + 1}
+                                    </span>
+                                    <span className="font-bold text-gray-700">{SECTION_LABELS[section] || section}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newOrder = [...sectionOrder];
+                                            if (index > 0) {
+                                                [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+                                                setSectionOrder(newOrder);
+                                            }
+                                        }}
+                                        disabled={index === 0}
+                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 transition"
+                                    >
+                                        <ArrowUp size={18} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newOrder = [...sectionOrder];
+                                            if (index < sectionOrder.length - 1) {
+                                                [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                                                setSectionOrder(newOrder);
+                                            }
+                                        }}
+                                        disabled={index === sectionOrder.length - 1}
+                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 transition"
+                                    >
+                                        <ArrowDown size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
+                        💡 'Q&A'나 '문의하기'는 애드온 스토어에서 활성화해야 실제 화면에 나타납니다.
                     </div>
                 </section>
 
