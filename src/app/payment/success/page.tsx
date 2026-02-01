@@ -7,9 +7,14 @@ import { supabase } from '@/utils/supabase/client';
 
 function SuccessContent() {
     const searchParams = useSearchParams();
+    // Toss Payments params
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
     const amount = searchParams.get('amount');
+
+    // PortOne params
+    const paymentId = searchParams.get('paymentId');
+
     const id = searchParams.get('id');
 
     const [status, setStatus] = useState('결제 확인 중...');
@@ -17,7 +22,10 @@ function SuccessContent() {
 
     useEffect(() => {
         const verifyAndActivate = async () => {
-            if (!paymentKey || !orderId || !amount || !id) {
+            // Check for either Toss (paymentKey) or PortOne (paymentId)
+            const isValidPayment = (paymentKey && orderId && amount) || paymentId;
+
+            if (!id || !isValidPayment) {
                 setStatus('결제 정보가 올바르지 않습니다.');
                 setIsProcessing(false);
                 return;
@@ -51,7 +59,7 @@ function SuccessContent() {
         };
 
         verifyAndActivate();
-    }, [paymentKey, orderId, amount, id]);
+    }, [paymentKey, orderId, amount, paymentId, id]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50 font-sans">

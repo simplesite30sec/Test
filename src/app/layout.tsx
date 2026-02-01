@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "SimpleSite - 30초만에 홈페이지 만들기",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="antialiased">
+        <Script src="https://cdn.portone.io/v2/browser-sdk.js" strategy="beforeInteractive" />
         {children}
       </body>
     </html>

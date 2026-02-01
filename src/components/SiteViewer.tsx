@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabase } from '@/utils/supabase/client';
 import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle } from 'lucide-react';
-import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 
 type SiteData = {
     name: string;
@@ -33,6 +33,55 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [loading, setLoading] = useState(!initialData);
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [isExpired, setIsExpired] = useState(false);
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [couponMessage, setCouponMessage] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [finalPrice, setFinalPrice] = useState(9900);
+    const [isCouponApplied, setIsCouponApplied] = useState(false);
+
+    const verifyCoupon = async () => {
+        if (!couponCode.trim()) {
+            setCouponMessage('쿠폰 코드를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const { data: coupon, error } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', couponCode.trim())
+                .single();
+
+            if (error || !coupon) {
+                setCouponMessage('유효하지 않은 쿠폰입니다.');
+                setIsCouponApplied(false);
+                setDiscountAmount(0);
+                setFinalPrice(9900);
+                return;
+            }
+
+            if (coupon.type === 'free') {
+                setDiscountAmount(9900);
+                setFinalPrice(0);
+                setCouponMessage('무료 이용권이 적용되었습니다! (100% 할인)');
+                setIsCouponApplied(true);
+            } else if (coupon.type === 'discount') {
+                const discount = coupon.value || 0;
+                const price = Math.max(0, 9900 - discount);
+                setDiscountAmount(discount);
+                setFinalPrice(price);
+                setCouponMessage(`${discount.toLocaleString()}원 할인이 적용되었습니다.`);
+                setIsCouponApplied(true);
+            }
+        } catch (e) {
+            console.error(e);
+            setCouponMessage('쿠폰 확인 중 오류가 발생했습니다.');
+        }
+    };
+
+
 
     useEffect(() => {
         if (!data) {
@@ -75,21 +124,78 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     }, [expiresAt, isPaid]);
 
     const handlePayment = async () => {
-        const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+        // If price is 0 (Free Coupon), skip PortOne and activate directly
+        if (finalPrice === 0 && isCouponApplied) {
+            if (!confirm('무료 이용권을 사용하여 기간을 연장하시겠습니까?')) return;
+
+            try {
+                // 1. Update Site (Activate)
+                const oneYearLater = new Date();
+                oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+
+                const { error: updateError } = await supabase
+                    .from('sites')
+                    .update({
+                        is_paid: true,
+                        expires_at: oneYearLater.toISOString()
+                    })
+                    .eq('id', id);
+
+                if (updateError) throw updateError;
+
+                alert("무료 이용권이 적용되었습니다!");
+                window.location.reload();
+                return;
+            } catch (e) {
+                console.error("Free Activation Failed", e);
+                alert("이용권 적용에 실패했습니다.");
+                return;
+            }
+        }
+
+        const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-c539d171-6af5-4238-be7d-9aea0279ae15";
+        const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-9355d9b2-e369-4737-9f64-1623f95ae009";
 
         try {
+            // Check if PortOne V2 SDK is loaded
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const tossPayments = await loadTossPayments(clientKey) as any;
+            const PortOne = (window as any).PortOne;
 
-            await tossPayments.requestPayment('카드', {
-                amount: 9900,
-                orderId: `ORDER_${id}_${Date.now()}`,
+            if (!PortOne) {
+                alert("결제 SDK가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            const paymentId = `PAY-${id}-${Date.now()}`;
+
+            const response = await PortOne.requestPayment({
+                storeId: storeId,
+                channelKey: channelKey,
+                paymentId: paymentId,
                 orderName: "1년 이용권 (Premium)",
-                customerName: data?.name || "고객",
-                customerEmail: "customer@example.com",
-                successUrl: `${window.location.origin}/payment/success?id=${id}`,
-                failUrl: `${window.location.origin}/payment/fail`,
+                totalAmount: finalPrice, // Use discounted price
+                currency: "CURRENCY_KRW",
+                payMethod: "CARD",
+                customer: {
+                    fullName: data?.name || "고객",
+                    email: "customer@example.com",
+                    phoneNumber: "010-0000-0000"
+                },
+                redirectUrl: `${window.location.origin}/payment/success?id=${id}` // PortOne V2 redirects directly
             });
+
+            // If response is returned (e.g. for popup/iframe modes that don't redirect), check code
+            if (response && response.code !== undefined) {
+                if (response.code != null) {
+                    // Payment failed or cancelled logic if SDK returns immediately (depends on browser environment)
+                    // But V2 usually redirects or returns a promise for non-redirect methods.
+                    // For simply redirectUrl configured, it might not return here if redirected.
+                    // If it returns an error here:
+                    console.error("Payment error:", response);
+                    alert(`결제 처리 중 오류가 발생했습니다: ${response.message || "알 수 없는 오류"}`);
+                }
+            }
+
         } catch (error: unknown) {
             console.error("Payment request failed:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -104,20 +210,58 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     if (isExpired && !isPaid) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md text-center">
+                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md text-center w-full">
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertTriangle className="w-10 h-10 text-red-500" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-3">체험 시간이 만료되었습니다</h1>
-                    <p className="text-gray-500 mb-8">
+                    <p className="text-gray-500 mb-6">
                         5시간 무료 체험이 종료되었습니다.<br />
                         결제하시면 사이트를 계속 이용하실 수 있습니다.
                     </p>
+
+                    {/* Coupon Section */}
+                    <div className="mb-6 bg-gray-50 p-4 rounded-xl">
+                        <div className="flex gap-2 mb-2">
+                            <input
+                                type="text"
+                                placeholder="쿠폰 코드 입력"
+                                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value)}
+                            />
+                            <button
+                                onClick={verifyCoupon}
+                                className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm whitespace-nowrap"
+                            >
+                                적용
+                            </button>
+                        </div>
+                        {couponMessage && <p className={`text-sm ${isCouponApplied ? 'text-green-600' : 'text-red-500'}`}>{couponMessage}</p>}
+                    </div>
+
+                    <div className="mb-8 border-t pt-4">
+                        <div className="flex justify-between text-gray-600 mb-1">
+                            <span>상품 금액</span>
+                            <span>9,900원</span>
+                        </div>
+                        {isCouponApplied && (
+                            <div className="flex justify-between text-green-600 mb-1">
+                                <span>쿠폰 할인</span>
+                                <span>- {discountAmount.toLocaleString()}원</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-xl font-bold text-gray-900 mt-2">
+                            <span>최종 결제 금액</span>
+                            <span>{finalPrice.toLocaleString()}원</span>
+                        </div>
+                    </div>
+
                     <button
                         onClick={handlePayment}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition"
                     >
-                        지금 결제하기 (9,900원/년)
+                        {finalPrice === 0 ? "무료로 이용 시작하기" : `${finalPrice.toLocaleString()}원 결제하기`}
                     </button>
                 </div>
             </div>
@@ -140,7 +284,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     } = data;
 
     const overlayOpacity = hero_opacity / 100;
-    const phones = (phone || '').split('|').map(p => p.trim()).filter(Boolean);
+    const phones = (phone || '').split('|').map((p: string) => p.trim()).filter(Boolean);
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200">
@@ -249,7 +393,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         <div className="max-w-5xl mx-auto">
                             <h3 className="text-3xl font-bold mb-12 text-center">Customer Reviews</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {reviews.map((review, idx) => (
+                                {reviews.map((review: { id: string; name: string; content: string; rating: number }, idx: number) => (
                                     <div key={idx} className="p-8 bg-gray-50 rounded-2xl relative border border-gray-100">
                                         <Quote className="text-blue-200 mb-4 absolute top-6 right-6" size={40} />
                                         <div className="flex gap-1 mb-4">
