@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
     try {
-        const { couponCode, addonType } = await req.json();
+        const { couponCode } = await req.json();
 
         if (!couponCode) {
             return NextResponse.json({ error: '쿠폰 코드를 입력해주세요.' }, { status: 400 });
