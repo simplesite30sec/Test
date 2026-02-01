@@ -137,6 +137,12 @@ export default function DashboardPage() {
             return;
         }
 
+        // Check if already purchased
+        if (purchasedAddons[addon.id]) {
+            await handleToggleAddon(addon.id, false);
+            return;
+        }
+
         // Trial sites -> Free installation
         if (!site.is_paid) {
             await installAddonFree(addon.id);
@@ -156,13 +162,13 @@ export default function DashboardPage() {
     const installAddonFree = async (addonId: string) => {
         if (!selectedSiteId) return;
 
-        const { error } = await supabase.from('site_addons').insert({
+        const { error } = await supabase.from('site_addons').upsert({
             site_id: selectedSiteId,
             addon_type: addonId,
             config: addonId === 'inquiry' ? { notification_email: notificationEmail } : {},
             is_active: true,
             is_purchased: false // Free trial
-        });
+        }, { onConflict: 'site_id,addon_type' });
 
         if (!error) {
             alert('무료 체험 기간 중에는 무료로 추가됩니다!');
@@ -196,7 +202,8 @@ export default function DashboardPage() {
                 setCouponMessage(data.message);
                 setCouponValid(true);
             } else {
-                setCouponMessage(data.error || '쿠폰 검증 실패');
+                const detailMsg = data.details ? ` (${data.details})` : '';
+                setCouponMessage((data.error || '쿠폰 검증 실패') + detailMsg);
                 setCouponValid(false);
             }
         } catch (e) {
@@ -217,7 +224,7 @@ export default function DashboardPage() {
         }
 
         try {
-            const { error } = await supabase.from('site_addons').insert({
+            const { error } = await supabase.from('site_addons').upsert({
                 site_id: selectedSiteId,
                 addon_type: selectedAddon.id,
                 config: selectedAddon.id === 'inquiry' ? { notification_email: notificationEmail } : {},
@@ -226,7 +233,7 @@ export default function DashboardPage() {
                 purchase_type: paymentMethod,
                 purchased_at: new Date().toISOString(),
                 coupon_code: paymentMethod === 'coupon' ? couponCode : null
-            });
+            }, { onConflict: 'site_id,addon_type' });
 
             if (!error) {
                 alert(paymentMethod === 'coupon' ? '쿠폰으로 구매 완료!' : '결제 완료! (모의 결제)');

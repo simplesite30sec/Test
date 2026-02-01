@@ -40,8 +40,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Check usage limit
-        if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+        if (coupon.used_count !== undefined && coupon.max_uses !== undefined && coupon.used_count >= coupon.max_uses) {
             return NextResponse.json({ error: '쿠폰 사용 횟수가 초과되었습니다.' }, { status: 400 });
+        } else if (coupon.max_uses === undefined) {
+            console.warn('Coupon table missing max_uses column');
+            // If column is missing, we might want to warn or proceed with caution.
+            // For now, let's treat it as a schema error for the user to fix.
+            return NextResponse.json({
+                error: '쿠폰 시스템 설정이 완료되지 않았습니다.',
+                details: 'DB에 max_uses 컬럼이 없습니다. SQL을 다시 실행해 주세요.'
+            }, { status: 500 });
         }
 
         // Increment usage count
