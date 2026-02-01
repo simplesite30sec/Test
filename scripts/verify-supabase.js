@@ -1,23 +1,30 @@
 
 const { createClient } = require('@supabase/supabase-js');
-const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 
-// Load .env.local manually since we are running this script directly with node
+// Manually parse .env.local because dotenv might not be installed in the root or devDependencies
 const envLocalPath = path.resolve(__dirname, '../.env.local');
+let supabaseUrl = '';
+let supabaseKey = '';
+
 if (fs.existsSync(envLocalPath)) {
-    const envConfig = dotenv.parse(fs.readFileSync(envLocalPath));
-    for (const k in envConfig) {
-        process.env[k] = envConfig[k];
+    const content = fs.readFileSync(envLocalPath, 'utf8');
+    const lines = content.split('\n');
+    for (const line of lines) {
+        if (line.startsWith('NEXT_PUBLIC_SUPABASE_URL=')) {
+            supabaseUrl = line.split('=')[1].trim();
+        }
+        if (line.startsWith('NEXT_PUBLIC_SUPABASE_ANON_KEY=')) {
+            supabaseKey = line.split('=')[1].trim();
+        }
     }
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 if (!supabaseUrl || !supabaseKey) {
-    console.error('Error: Missing Supabase environment variables');
+    console.error('Error: Missing Supabase environment variables in .env.local');
+    console.error('Found URL:', supabaseUrl);
+    console.error('Found Key:', supabaseKey ? 'Yes (Hidden)' : 'No');
     process.exit(1);
 }
 
@@ -27,25 +34,19 @@ async function testConnection() {
     console.log('Testing Supabase connection...');
     console.log(`URL: ${supabaseUrl}`);
 
-    // Try to access a non-existent table just to check connectivity/auth
-    // If the key is invalid, it should return 401 or similar.
-    // If the key is valid but table doesn't exist, it might returns 404 or 400 or empty data depending on RLS.
-    // But a simple health check verifies the client initialization.
-
     try {
-        // Just checking if we can auth (even if anon)
         const { data, error } = await supabase.from('random_table_check').select('*').limit(1);
 
-        // If we get an error like "relation does not exist", that means we successfully connected to the DB
-        // If we get "invalid header" or "apikey" error, then auth failed.
-
         if (error) {
+            // If we get an error about table not found, it implies we connected successfully
+            // code 42P01 is undefined_table in Postgres, often Supabase returns 404 or specific error message JSON
+            // We can also assume that if it's NOT a connection/url error, it's good.
             if (error.code === 'PGRST204' || error.message.includes('relation') || error.message.includes('permission')) {
                 console.log('Success: Connected to Supabase (Table check returned expected not found/permission error)');
-                console.log('Connection verified!');
             } else {
-                console.log('Warning: Connection issue or unexpected error:', error.message);
-                // For new project, simple select might verify URL at least.
+                console.log('Warning: Connection response received but errored:', error.message);
+                // It's still a "success" in terms of reaching the server
+                if (error.code) console.log('Error Code:', error.code);
             }
         } else {
             console.log('Success: Connected to Supabase');
