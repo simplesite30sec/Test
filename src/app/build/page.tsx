@@ -425,8 +425,15 @@ function HomeContent() {
                 }
             } catch (dbError) {
                 console.error("DB Operation Failed, switching to Mock Mode", dbError);
-                const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
-                alert(`Supabase 오류: ${errorMessage}\n\n로컬 저장소(LocalStorage)를 사용합니다.`);
+                let errorMessage = 'Unknown error';
+                if (dbError instanceof Error) {
+                    errorMessage = dbError.message;
+                } else if (typeof dbError === 'object' && dbError !== null) {
+                    errorMessage = JSON.stringify(dbError, null, 2);
+                } else {
+                    errorMessage = String(dbError);
+                }
+                alert(`Supabase 오류:\n${errorMessage}\n\n로컬 저장소(LocalStorage)를 사용합니다.`);
                 const resultId = editId || `demo-${Date.now()}`;
 
                 if (heroImage) { siteData.hero_image_url = await fileToBase64(heroImage); }
