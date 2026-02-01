@@ -56,8 +56,12 @@ export async function POST(req: NextRequest) {
             message: '쿠폰이 적용되었습니다!'
         });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error('Coupon verification error:', e);
-        return NextResponse.json({ error: '쿠폰 검증 중 오류가 발생했습니다.' }, { status: 500 });
+        return NextResponse.json({
+            error: '쿠폰 검증 중 오류가 발생했습니다.',
+            details: e.message || '알 수 없는 오류',
+            envExists: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+        }, { status: 500 });
     }
 }
