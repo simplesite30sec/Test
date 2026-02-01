@@ -272,11 +272,17 @@ function HomeContent() {
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
-            const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
-            if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+            const { error: uploadError } = await supabase.storage.from('image').upload(filePath, file);
+            if (uploadError) {
+                console.error('Upload error:', uploadError);
+                throw new Error(`Upload failed: ${uploadError.message}`);
+            }
+            const { data } = supabase.storage.from('image').getPublicUrl(filePath);
             return data.publicUrl;
-        } catch (e) { throw e; }
+        } catch (e) {
+            console.error('File upload error:', e);
+            throw e;
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -286,15 +292,27 @@ function HomeContent() {
         try {
             let finalHeroImageUrl = heroImageUrl;
             if (heroImage) {
-                try { finalHeroImageUrl = await uploadFile(heroImage); }
-                catch { console.warn("Supabase upload failed."); }
+                try {
+                    finalHeroImageUrl = await uploadFile(heroImage);
+                }
+                catch (error) {
+                    console.error("Hero image upload failed:", error);
+                    alert(`히어로 이미지 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}.\n\nSupabase Storage 버킷 설정을 확인해주세요.`);
+                    setLoading(false);
+                    return;
+                }
             }
 
             const portfolioWithImages = await Promise.all(portfolio.map(async (item) => {
                 let itemImageUrl = item.imageUrl || '';
                 if (item.file) {
-                    try { itemImageUrl = await uploadFile(item.file); }
-                    catch { console.warn("Supabase portfolio upload failed."); }
+                    try {
+                        itemImageUrl = await uploadFile(item.file);
+                    }
+                    catch (error) {
+                        console.error("Portfolio image upload failed:", error);
+                        alert(`포트폴리오 이미지 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}.\n\nSupabase Storage 버킷 설정을 확인해주세요.`);
+                    }
                 }
                 return { title: item.title, desc: item.desc, image_url: itemImageUrl }
             }));
