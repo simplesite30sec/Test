@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { Phone, MapPin, ArrowRight } from 'lucide-react';
 
 export default function Preview({
