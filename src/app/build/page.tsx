@@ -371,7 +371,14 @@ function HomeContent() {
                     if (error) throw error;
                     resultId = data.id;
                 }
-                router.push(`/site?id=${resultId}`);
+
+                // Open in new window if editing, otherwise navigate
+                if (editId) {
+                    window.open(`/site?id=${resultId}&edit=true`, '_blank');
+                    alert('수정이 완료되었습니다! 새 창에서 확인해주세요.');
+                } else {
+                    router.push(`/site?id=${resultId}`);
+                }
             } catch (dbError) {
                 console.error("DB Operation Failed, switching to Mock Mode", dbError);
                 alert('Supabase 연결/저장 실패. 로컬 저장소(LocalStorage)를 사용합니다.');
