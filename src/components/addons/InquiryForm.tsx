@@ -12,6 +12,7 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
         e.preventDefault();
         setSending(true);
 
+        // Save to database
         const { error } = await supabase.from('site_inquiries').insert({
             site_id: siteId,
             name: formData.name,
@@ -20,14 +21,33 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
             message: formData.message
         });
 
-        setSending(false);
-
-        if (!error) {
-            alert('문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.');
-            setFormData({ name: '', contact: '', email: '', message: '' });
-        } else {
+        if (error) {
+            setSending(false);
             alert('전송 실패. 잠시 후 다시 시도해주세요.');
+            return;
         }
+
+        // Send email notification (non-blocking)
+        try {
+            await fetch('/api/send-inquiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    siteId,
+                    name: formData.name,
+                    contact: formData.contact,
+                    message: formData.message,
+                    senderEmail: formData.email
+                })
+            });
+        } catch (emailError) {
+            // Email failed, but inquiry was saved - don't block user
+            console.error('Failed to send email notification:', emailError);
+        }
+
+        setSending(false);
+        alert('문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.');
+        setFormData({ name: '', contact: '', email: '', message: '' });
     };
 
     return (
