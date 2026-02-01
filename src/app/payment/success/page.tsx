@@ -111,7 +111,7 @@ function SuccessContent() {
 
                         <div className="space-y-3">
                             {id && (
-                                <Link href={`/site/${id}`} className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition shadow-md hover:shadow-lg">
+                                <Link href={`/site?id=${id}`} className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition shadow-md hover:shadow-lg">
                                     내 홈페이지로 이동
                                 </Link>
                             )}

@@ -604,10 +604,10 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <h1 className="text-xl font-bold tracking-tight">{name}</h1>
                     <nav className="hidden md:flex gap-8 text-sm font-medium text-gray-500">
-                        <a href="#" className="hover:text-black transition">소개</a>
-                        {portfolio.length > 0 && <a href="#menu" className="hover:text-black transition">메뉴/상품</a>}
-                        {reviews.length > 0 && <a href="#reviews" className="hover:text-black transition">후기</a>}
-                        <a href="#contact" className="hover:text-black transition">연락처</a>
+                        <a href="#" className="hover:text-black transition">{section_titles?.about || '소개'}</a>
+                        {portfolio.length > 0 && <a href="#menu" className="hover:text-black transition">{section_titles?.menu || '메뉴/상품'}</a>}
+                        {reviews.length > 0 && <a href="#reviews" className="hover:text-black transition">{section_titles?.reviews || '후기'}</a>}
+                        <a href="#contact" className="hover:text-black transition">{section_titles?.contact || '연락처'}</a>
                     </nav>
                 </div>
             </header>
@@ -622,7 +622,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         switch (section) {
                             case 'hero':
                                 return (
-                                    <section key="hero" className="relative h-[80vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden" style={sectionStyle}>
+                                    <section key="hero" className="relative h-[90vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden" style={sectionStyle}>
                                         {hero_image_url && (
                                             <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: `url(${hero_image_url})` }} />
                                         )}
@@ -640,7 +640,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                             case 'about':
                                 return description ? (
                                     <section key="about" className="py-24 px-6">
-                                        <div className="max-w-3xl mx-auto">
+                                        <div className="max-w-3xl mx-auto text-center">
                                             <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 block">{titles.about}</span>
                                             <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap">{description}</p>
                                         </div>
@@ -707,12 +707,37 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                         <div className="max-w-4xl mx-auto text-center">
                                             <h3 className="text-3xl font-bold mb-12">{titles.contact}</h3>
                                             {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube || social_links.email) && (
-                                                <div className="flex justify-center gap-6 mb-12">
-                                                    {social_links.instagram && <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-pink-600 transition"><Instagram /></a>}
-                                                    {social_links.facebook && <a href={social_links.facebook} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-blue-600 transition"><Facebook /></a>}
-                                                    {social_links.blog && <a href={social_links.blog} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-green-600 transition"><MessageCircle /></a>}
-                                                    {social_links.youtube && <a href={social_links.youtube} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-red-600 transition"><Youtube /></a>}
-                                                    {social_links.email && <a href={`mailto:${social_links.email}`} className="p-3 bg-white rounded-full shadow hover:text-gray-600 transition"><MessageCircle /></a>}
+                                                <div className="flex justify-center gap-8 mb-12">
+                                                    {social_links.instagram && (
+                                                        <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-pink-600 transition"><Instagram /></div>
+                                                            <span className="text-xs font-medium text-gray-500">Instagram</span>
+                                                        </a>
+                                                    )}
+                                                    {social_links.facebook && (
+                                                        <a href={social_links.facebook} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-blue-600 transition"><Facebook /></div>
+                                                            <span className="text-xs font-medium text-gray-500">Facebook</span>
+                                                        </a>
+                                                    )}
+                                                    {social_links.blog && (
+                                                        <a href={social_links.blog} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-green-600 transition"><MessageCircle /></div>
+                                                            <span className="text-xs font-medium text-gray-500">Blog</span>
+                                                        </a>
+                                                    )}
+                                                    {social_links.youtube && (
+                                                        <a href={social_links.youtube} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-red-600 transition"><Youtube /></div>
+                                                            <span className="text-xs font-medium text-gray-500">YouTube</span>
+                                                        </a>
+                                                    )}
+                                                    {social_links.email && (
+                                                        <a href={`mailto:${social_links.email}`} className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-gray-600 transition"><MessageCircle /></div>
+                                                            <span className="text-xs font-medium text-gray-500">Email</span>
+                                                        </a>
+                                                    )}
                                                 </div>
                                             )}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-2xl mx-auto mb-12">
@@ -741,8 +766,18 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                     <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
                                                         {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0" title="Map" allowFullScreen /> :
                                                             map_links.kakao ? <iframe src={map_links.kakao} className="w-full h-full border-0" title="Map" allowFullScreen /> :
-                                                                google_map ? <iframe src={google_map} className="w-full h-full border-0" title="Map" allowFullScreen /> :
-                                                                    null}
+                                                                google_map?.includes('/embed') ? <iframe src={google_map} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                                    google_map ? (
+                                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                                                            <div className="text-center p-6">
+                                                                                <Globe size={48} className="mx-auto mb-4 text-gray-400" />
+                                                                                <p className="text-gray-600 mb-4">구글 지도 미리보기를 표시할 수 없습니다.</p>
+                                                                                <a href={google_map} target="_blank" rel="noopener noreferrer" className="inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition">
+                                                                                    구글 지도에서 열기
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
                                                     </div>
                                                 </div>
                                             )}

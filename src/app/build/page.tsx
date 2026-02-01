@@ -416,7 +416,7 @@ function HomeContent() {
 
     return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10">
+            <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10 flex flex-col gap-8 p-8">
                 <div className="bg-blue-600 p-8 text-white">
                     <div className="flex justify-between items-start">
                         <div>
