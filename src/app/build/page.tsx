@@ -253,6 +253,9 @@ function HomeContent() {
             // Combine phones
             const phones = [formData.phone, formData.phone2, formData.phone3].filter(p => p.trim() !== '').join('|');
 
+            // Calculate expiration time (5 hours from now)
+            const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+
             const siteData = {
                 name: formData.name,
                 slogan: formData.slogan,
@@ -274,7 +277,14 @@ function HomeContent() {
                     const { error } = await supabase.from('sites').update(siteData).eq('id', editId);
                     if (error) throw error;
                 } else {
-                    const { data, error } = await supabase.from('sites').insert([siteData]).select().single();
+                    // New site: add trial fields
+                    const newSiteData = {
+                        ...siteData,
+                        user_id: user?.id,
+                        expires_at: expiresAt,
+                        is_paid: false,
+                    };
+                    const { data, error } = await supabase.from('sites').insert([newSiteData]).select().single();
                     if (error) throw error;
                     resultId = data.id;
                 }

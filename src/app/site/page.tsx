@@ -10,6 +10,8 @@ function SiteContent() {
     const id = searchParams.get('id') || '';
     const [initialData, setInitialData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [expiresAt, setExpiresAt] = useState<string | undefined>();
+    const [isPaid, setIsPaid] = useState<boolean>(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -25,6 +27,8 @@ function SiteContent() {
                     .single();
                 if (!error && data) {
                     setInitialData(data);
+                    setExpiresAt(data.expires_at);
+                    setIsPaid(data.is_paid || false);
                 }
             } catch {
                 // Supabase fetch failed
@@ -50,7 +54,7 @@ function SiteContent() {
         );
     }
 
-    return <SiteViewer initialData={initialData} id={id} />;
+    return <SiteViewer initialData={initialData} id={id} expiresAt={expiresAt} isPaid={isPaid} />;
 }
 
 export default function SitePage() {

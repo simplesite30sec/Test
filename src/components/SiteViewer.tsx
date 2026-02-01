@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle } from 'lucide-react';
+import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle } from 'lucide-react';
 import { loadPaymentWidget, PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
 
 type SiteData = {
@@ -17,12 +17,22 @@ type SiteData = {
     social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; youtube?: string; email?: string };
     reviews?: { id: string; name: string; content: string; rating: number }[];
     portfolio: { title: string; desc: string; image_url: string }[];
+    expires_at?: string;
+    is_paid?: boolean;
 };
 
-export default function SiteViewer({ initialData, id }: { initialData: SiteData | null, id: string }) {
+type SiteViewerProps = {
+    initialData: SiteData | null;
+    id: string;
+    expiresAt?: string;
+    isPaid?: boolean;
+};
+
+export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteViewerProps) {
     const [data, setData] = useState<SiteData | null>(initialData);
     const [loading, setLoading] = useState(!initialData);
-    // const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
+    const [timeLeft, setTimeLeft] = useState<string>('');
+    const [isExpired, setIsExpired] = useState(false);
     const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
 
     useEffect(() => {
@@ -46,12 +56,37 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
             try {
                 const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
                 paymentWidgetRef.current = loadedWidget;
-                // setPaymentWidget(loadedWidget);
             } catch (error) {
                 console.error("Failed to load payment widget:", error);
             }
         })();
     }, []);
+
+    // Countdown timer for trial expiration
+    useEffect(() => {
+        if (isPaid || !expiresAt) return;
+
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const expireTime = new Date(expiresAt).getTime();
+            const diff = expireTime - now;
+
+            if (diff <= 0) {
+                setIsExpired(true);
+                setTimeLeft('만료됨');
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft(`${hours}시간 ${minutes}분 ${seconds}초`);
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [expiresAt, isPaid]);
 
     const handlePayment = async () => {
         if (!paymentWidgetRef.current) {
@@ -76,6 +111,30 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
     if (loading) return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
     if (!data) return <div className="min-h-screen flex items-center justify-center">사이트를 찾을 수 없습니다. (로컬 저장소 확인 중...)</div>;
 
+    // Expired site blocking screen
+    if (isExpired && !isPaid) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md text-center">
+                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertTriangle className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-3">체험 시간이 만료되었습니다</h1>
+                    <p className="text-gray-500 mb-8">
+                        5시간 무료 체험이 종료되었습니다.<br />
+                        결제하시면 사이트를 계속 이용하실 수 있습니다.
+                    </p>
+                    <button
+                        onClick={handlePayment}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition"
+                    >
+                        지금 결제하기 (9,900원/년)
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const {
         name,
         slogan,
@@ -96,8 +155,19 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200">
+            {/* Trial Timer Banner */}
+            {!isPaid && timeLeft && (
+                <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 px-4 text-center text-sm font-medium z-[60]">
+                    <Clock className="inline-block w-4 h-4 mr-2" />
+                    체험 남은 시간: <span className="font-bold">{timeLeft}</span>
+                    <button onClick={handlePayment} className="ml-4 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-50 transition">
+                        지금 결제
+                    </button>
+                </div>
+            )}
+
             {/* Header */}
-            <header className="fixed w-full top-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+            <header className={`fixed w-full ${!isPaid && timeLeft ? 'top-10' : 'top-0'} bg-white/80 backdrop-blur-md z-50 border-b border-gray-100`}>
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <h1 className="text-xl font-bold tracking-tight">{name}</h1>
                     <nav className="hidden md:flex gap-8 text-sm font-medium text-gray-500">
