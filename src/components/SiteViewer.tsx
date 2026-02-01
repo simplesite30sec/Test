@@ -568,14 +568,17 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
 
             {/* Premium Status Banner - Only in Edit Mode */}
             {isPaid && expiresAt && isEditMode && (
-                <div className="fixed top-0 left-0 right-0 bg-blue-600/90 backdrop-blur-md text-white py-2 px-6 text-center text-sm font-medium z-[60] shadow-sm flex justify-center items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                    <span>사이트 소유권 보유 중</span>
-                    <span className="opacity-75 mx-1">|</span>
-                    <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
-                    <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
-                        D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
-                    </span>
+                <div className="fixed top-0 left-0 right-0 bg-blue-600/90 backdrop-blur-md text-white py-2 px-6 text-center text-sm font-medium z-[60] shadow-sm">
+                    <div className="flex justify-center items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                        <span>사이트 소유권 보유 중</span>
+                        <span className="opacity-75 mx-1">|</span>
+                        <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
+                        <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
+                            D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                        </span>
+                    </div>
+                    <p className="text-xs text-blue-100 mt-1">대시보드에서 보기 모드로 보면 해당 문구는 보이지 않습니다.</p>
                 </div>
             )}
 
