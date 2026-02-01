@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter } from 'lucide-react';
+import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter, ShoppingBag, X } from 'lucide-react';
 
 type Site = {
     id: string;
@@ -40,6 +40,60 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [filterRange, setFilterRange] = useState<'day' | 'week' | 'month' | 'all'>('all');
     const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
+
+    // Add-on Store State
+    const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+    const [showStore, setShowStore] = useState(false);
+    const [siteAddons, setSiteAddons] = useState<string[]>([]); // Addons for selected site
+
+    const availableAddons = [
+        { id: 'inquiry', name: '1:1 문의하기 폼', price: 3000, desc: '고객의 문의를 바로 받아보세요.' },
+        { id: 'qna', name: 'Q&A 게시판', price: 3000, desc: '비밀글 기능이 포함된 질문 게시판입니다.' },
+        // { id: 'domain', name: '개인 도메인 연결', price: 15000, desc: '나만의 도메인(com, kr)을 연결하세요.' }
+    ];
+
+    const openStore = async (siteId: string) => {
+        setSelectedSiteId(siteId);
+        setShowStore(true);
+        // Fetch current addons
+        const { data } = await supabase.from('site_addons').select('addon_type').eq('site_id', siteId).eq('is_active', true);
+        if (data) setSiteAddons(data.map(d => d.addon_type));
+    };
+
+    const handleInstallAddon = async (addonId: string, price: number) => {
+        if (!selectedSiteId) return;
+
+        // Logic: specific payment flow or free depending on current status?
+        // User said: "Free during trial".
+        const site = sites.find(s => s.id === selectedSiteId) || allSites.find(s => s.id === selectedSiteId);
+        if (!site) return;
+
+        if (site.is_paid) {
+            // Already owned site -> Need Payment (Mock for now)
+            if (!confirm(`${price.toLocaleString()}원 결제가 필요합니다. (현재는 모의 결제)`)) return;
+        } else {
+            // Trial -> Free
+            alert('무료 체험 기간 중에는 무료로 추가됩니다!');
+        }
+
+        const { error } = await supabase.from('site_addons').insert({
+            site_id: selectedSiteId,
+            addon_type: addonId,
+            config: {}
+        });
+
+        if (!error) {
+            alert('기능이 추가되었습니다!');
+            setSiteAddons([...siteAddons, addonId]);
+            // Reload logic if needed, or just update local state
+        } else {
+            // Uniqueness violation usually means already exists, maybe inactive?
+            // Try update
+            await supabase.from('site_addons').update({ is_active: true }).eq('site_id', selectedSiteId).eq('addon_type', addonId);
+            setSiteAddons([...siteAddons, addonId]);
+            alert('기능이 활성화되었습니다!');
+        }
+    };
 
     const isAdmin = user?.email === 'inmyeong320@naver.com';
 
@@ -425,6 +479,12 @@ export default function DashboardPage() {
                                         </Link>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 mt-3">
+                                        <button
+                                            onClick={() => openStore(site.id)}
+                                            className="col-span-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2.5 rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5"
+                                        >
+                                            <ShoppingBag size={16} /> 애드온 스토어
+                                        </button>
                                         {site.status !== 'draft' && (
                                             <button
                                                 onClick={() => toggleStatus(site.id, site.status)}
@@ -446,6 +506,57 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Add-on Store Modal */}
+                {showStore && selectedSiteId && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fadeIn">
+                            <div className="bg-gray-900 text-white p-6 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <ShoppingBag size={24} className="text-yellow-400" /> 애드온 스토어
+                                    </h3>
+                                    <p className="text-gray-400 text-sm mt-1">필요한 기능을 골라 사이트를 업그레이드하세요.</p>
+                                </div>
+                                <button onClick={() => setShowStore(false)} className="text-gray-400 hover:text-white transition">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6 bg-gray-50 max-h-[60vh] overflow-y-auto">
+                                <div className="grid grid-cols-1 gap-4">
+                                    {availableAddons.map(addon => {
+                                        const isInstalled = siteAddons.includes(addon.id);
+                                        return (
+                                            <div key={addon.id} className="bg-white p-5 rounded-2xl border border-gray-200 flex justify-between items-center shadow-sm hover:shadow-md transition">
+                                                <div>
+                                                    <h4 className="font-bold text-lg text-gray-900">{addon.name}</h4>
+                                                    <p className="text-sm text-gray-500 mb-2">{addon.desc}</p>
+                                                    <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                        {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => !isInstalled && handleInstallAddon(addon.id, addon.price)}
+                                                    disabled={isInstalled}
+                                                    className={`px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${isInstalled
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                            : 'bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95'
+                                                        }`}
+                                                >
+                                                    {isInstalled ? <><CheckCircle size={18} /> 설치됨</> : <><Plus size={18} /> 추가하기</>}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="mt-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-sm text-yellow-800">
+                                    <h5 className="font-bold flex items-center gap-2 mb-1"><AlertCircle size={14} /> 안내사항</h5>
+                                    <p>무료 체험 기간(소유권 미보유) 중에는 모든 애드온을 <b>무료</b>로 설치하여 테스트할 수 있습니다.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>

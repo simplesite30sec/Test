@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
-import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle } from 'lucide-react';
+import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, PlusCircle } from 'lucide-react';
+import QnABoard from './addons/QnABoard';
+import InquiryForm from './addons/InquiryForm';
 
 type SiteData = {
     name: string;
@@ -43,6 +45,40 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [finalPrice, setFinalPrice] = useState(9900);
     const [isCouponApplied, setIsCouponApplied] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [activeAddons, setActiveAddons] = useState<string[]>([]);
+    const [canManage, setCanManage] = useState(false); // Check if current user is owner
+
+    // Check ownership and fetch addons
+    useEffect(() => {
+        const checkOwnershipAndAddons = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && data && id) {
+                // Check if user owns this site (simple check, or rely on RLS)
+                // We can check if user ID matches (not stored in SiteData type fully here, but passed in props maybe?)
+                // For now, let's just assume we can check via Supabase if needed, or pass isOwner prop.
+                // Actually, data currently doesn't have user_id in the type defined in this file (it does in DB).
+                // Let's just fetch site details from DB to be sure.
+                const { data: site } = await supabase.from('sites').select('user_id').eq('id', id).single();
+                if (site && site.user_id === user.id) {
+                    setCanManage(true);
+                }
+            }
+
+            // Fetch Addons
+            if (id) {
+                const { data: addons } = await supabase
+                    .from('site_addons')
+                    .select('addon_type')
+                    .eq('site_id', id)
+                    .eq('is_active', true);
+
+                if (addons) {
+                    setActiveAddons(addons.map(a => a.addon_type));
+                }
+            }
+        };
+        checkOwnershipAndAddons();
+    }, [id, data]);
 
     // Initial Data Loading from LocalStorage (Backup)
     useEffect(() => {
@@ -226,7 +262,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 storeId: storeId,
                 channelKey: channelKey,
                 paymentId: paymentId,
-                orderName: "1년 이용권 (Premium)",
+                orderName: "1년 사이트 소유권 (Ownership)",
                 totalAmount: finalPrice, // Use discounted price
                 currency: "CURRENCY_KRW",
                 payMethod: "EASY_PAY",
@@ -491,8 +527,8 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {/* Premium Status Banner */}
             {isPaid && expiresAt && (
                 <div className="fixed top-0 left-0 right-0 bg-blue-600/90 backdrop-blur-md text-white py-2 px-6 text-center text-sm font-medium z-[60] shadow-sm flex justify-center items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                    <span>프리미엄 멤버십 이용 중</span>
+                    <CheckCircle className="w-4 h-4 text-white" />
+                    <span>사이트 소유권 보유 중</span>
                     <span className="opacity-75 mx-1">|</span>
                     <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
                     <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
@@ -627,6 +663,14 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                             </div>
                         </div>
                     </section>
+                )}
+
+                {/* Add-ons Section */}
+                {activeAddons.includes('qna') && (
+                    <QnABoard siteId={id} canManage={canManage} />
+                )}
+                {activeAddons.includes('inquiry') && (
+                    <InquiryForm siteId={id} />
                 )}
 
                 {/* Contact / CTA Section */}
