@@ -4,6 +4,7 @@ import SiteViewer from '@/components/SiteViewer';
 
 // Revalidate every 60 seconds (ISR)
 export const revalidate = 60;
+export const runtime = 'edge';
 
 export default async function SitePage({ params }: { params: { id: string } }) {
     let site = null;
