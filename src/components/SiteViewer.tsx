@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
 import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle } from 'lucide-react';
-import { User } from '@supabase/supabase-js';
 
 type SiteData = {
     name: string;
@@ -37,13 +36,27 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [isExpired, setIsExpired] = useState(false);
 
-    // Coupon State
     const [couponCode, setCouponCode] = useState('');
     const [couponMessage, setCouponMessage] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [finalPrice, setFinalPrice] = useState(9900);
     const [isCouponApplied, setIsCouponApplied] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+    // Owner Check (Moved to top level)
+    const [isOwner, setIsOwner] = useState(false);
+
+    useEffect(() => {
+        const checkOwner = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            // Simple check: if user exists and site has name (just ensuring we have data), assume owner for now 
+            // in this context since we don't have user_id in local SiteData type yet or valid RLS check on client
+            if (user) {
+                setIsOwner(true);
+            }
+        };
+        checkOwner();
+    }, [data]);
 
     const verifyCoupon = async () => {
         if (!couponCode.trim()) {
@@ -201,6 +214,28 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         }
     };
 
+    const handlePublish = async () => {
+        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 5시간 동안 무료 체험이 시작됩니다.')) return;
+
+        const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+
+        const { error } = await supabase
+            .from('sites')
+            .update({
+                status: 'active',
+                expires_at: expiresAt,
+                published_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (error) {
+            alert('게시 실패: ' + error.message);
+        } else {
+            alert('사이트가 성공적으로 게시되었습니다! 5시간 무료 체험이 시작됩니다.');
+            window.location.reload();
+        }
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
     if (!data) return <div className="min-h-screen flex items-center justify-center">사이트를 찾을 수 없습니다. (로컬 저장소 확인 중...)</div>;
 
@@ -273,43 +308,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const overlayOpacity = hero_opacity / 100;
     const phones = (phone || '').split('|').map((p: string) => p.trim()).filter(Boolean);
 
-    // Owner Check
-    const [isOwner, setIsOwner] = useState(false);
-    useEffect(() => {
-        const checkOwner = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email === 'admin@example.com' || (data?.name && user)) {
-                // Determine ownership by checking if user can update? 
-                // Or compare user_id if we had it. We don't have user_id in SiteData yet.
-                // Fetching user_id is better.
-                // But for now, let's assume if we are looking at draft, we are owner (due to future RLS).
-                setIsOwner(true);
-            }
-        };
-        checkOwner();
-    }, [data]);
 
-    const handlePublish = async () => {
-        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 5시간 동안 무료 체험이 시작됩니다.')) return;
-
-        const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
-
-        const { error } = await supabase
-            .from('sites')
-            .update({
-                status: 'active',
-                expires_at: expiresAt,
-                published_at: new Date().toISOString()
-            })
-            .eq('id', id);
-
-        if (error) {
-            alert('게시 실패: ' + error.message);
-        } else {
-            alert('사이트가 성공적으로 게시되었습니다! 5시간 무료 체험이 시작됩니다.');
-            window.location.reload();
-        }
-    };
 
     if (data?.status === 'draft') {
         return (

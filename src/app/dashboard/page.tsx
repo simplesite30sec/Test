@@ -33,7 +33,7 @@ export default function DashboardPage() {
             }
             setUser(user);
 
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('sites')
                 .select('*')
                 .eq('user_id', user.id)
@@ -126,7 +126,7 @@ export default function DashboardPage() {
                                     )}
                                     <div className="absolute top-4 right-4 flex gap-2">
                                         <div className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${site.status === 'active' ? 'bg-green-500' :
-                                                site.status === 'paused' ? 'bg-orange-500' : 'bg-gray-500'
+                                            site.status === 'paused' ? 'bg-orange-500' : 'bg-gray-500'
                                             }`}>
                                             {site.status === 'active' ? '게시됨' :
                                                 site.status === 'paused' ? '일시 정지' : '작성 중 (비공개)'}
@@ -163,8 +163,8 @@ export default function DashboardPage() {
                                             <button
                                                 onClick={() => toggleStatus(site.id, site.status)}
                                                 className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition ${site.status === 'paused'
-                                                        ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                                                        : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                                                    ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                                                    : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
                                                     }`}
                                             >
                                                 {site.status === 'paused' ? <><Play size={16} /> 재개</> : <><Pause size={16} /> 일시 정지</>}
