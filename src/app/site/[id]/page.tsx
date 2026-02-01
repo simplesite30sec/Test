@@ -42,3 +42,8 @@ export default function SitePage() {
 
     return <SiteViewer initialData={initialData} id={id} />;
 }
+
+// Required for static export - sites are generated dynamically at runtime
+export function generateStaticParams() {
+    return [];
+}
