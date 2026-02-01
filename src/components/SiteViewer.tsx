@@ -66,7 +66,6 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
                 customerEmail: "customer@example.com",
                 successUrl: `${window.location.origin}/payment/success?id=${id}`,
                 failUrl: `${window.location.origin}/payment/fail`,
-                amount: 9900,
             });
         } catch (error) {
             console.error("Payment request failed:", error);
