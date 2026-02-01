@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
-import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X } from 'lucide-react';
+import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X, Mail } from 'lucide-react';
 import QnABoard from './addons/QnABoard';
 import InquiryForm from './addons/InquiryForm';
 
@@ -19,7 +19,7 @@ type SiteData = {
     logo_url?: string;
     map_links: { naver?: string; kakao?: string };
     google_map?: string;
-    social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; youtube?: string; email?: string };
+    social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; threads?: string; youtube?: string; email?: string };
     reviews?: { id: string; name: string; content: string; rating: number }[];
     portfolio: { title: string; desc: string; image_url: string }[];
     expires_at?: string;
@@ -722,8 +722,8 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                     <section key="contact" id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">
                                         <div className="max-w-4xl mx-auto text-center">
                                             <h3 className="text-3xl font-bold mb-12">{titles.contact}</h3>
-                                            {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube || social_links.email) && (
-                                                <div className="flex justify-center gap-8 mb-12">
+                                            {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube || social_links.tiktok || social_links.threads || social_links.email) && (
+                                                <div className="flex justify-center gap-8 mb-12 flex-wrap">
                                                     {social_links.instagram && (
                                                         <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
                                                             <div className="p-3 bg-white rounded-full shadow group-hover:text-pink-600 transition"><Instagram /></div>
@@ -748,9 +748,25 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                             <span className="text-xs font-medium text-gray-500">YouTube</span>
                                                         </a>
                                                     )}
+                                                    {social_links.tiktok && (
+                                                        <a href={social_links.tiktok} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-black transition">
+                                                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                                                            </div>
+                                                            <span className="text-xs font-medium text-gray-500">TikTok</span>
+                                                        </a>
+                                                    )}
+                                                    {social_links.threads && (
+                                                        <a href={social_links.threads} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-black transition">
+                                                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12c-2-2-2-5 0-7s4-2 6 0"></path><path d="M12 12c2 2 2 5 0 7s-4 2-6 0"></path><path d="M12 12c-2 2-5 2-7 0s-2-4 0-6"></path><path d="M12 12c2-2 5-2 7 0s2 4 0 6"></path></svg>
+                                                            </div>
+                                                            <span className="text-xs font-medium text-gray-500">Threads</span>
+                                                        </a>
+                                                    )}
                                                     {social_links.email && (
                                                         <a href={`mailto:${social_links.email}`} className="flex flex-col items-center gap-2 group">
-                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-gray-600 transition"><MessageCircle /></div>
+                                                            <div className="p-3 bg-white rounded-full shadow group-hover:text-gray-600 transition"><Mail /></div>
                                                             <span className="text-xs font-medium text-gray-500">Email</span>
                                                         </a>
                                                     )}
@@ -857,17 +873,22 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                             <img src={data.logo_url} alt={name} className="h-12 mx-auto object-contain" />
                         </div>
                     )}
-                    {/* Ownership badge for paid sites with 50% opacity */}
-                    {isPaid && expiresAt && (
-                        <div className="mt-6 opacity-50 text-xs text-gray-400">
-                            <span>사이트 소유권 보유 중</span>
-                            <span className="mx-2">|</span>
-                            <span>만료일: {new Date(expiresAt).toLocaleDateString()}</span>
-                            <span className="ml-2">D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}</span>
-                        </div>
-                    )}
                 </div>
             </footer>
+            {/* Ownership badge as blue bar at 70% opacity */}
+            {isPaid && expiresAt && (
+                <div className="bg-blue-600/70 text-white py-3 px-6 text-center text-sm">
+                    <div className="flex justify-center items-center gap-2 flex-wrap">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>사이트 소유권 보유 중</span>
+                        <span className="opacity-75 mx-1">|</span>
+                        <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
+                        <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
+                            D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                        </span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

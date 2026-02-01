@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown } from 'lucide-react';
+import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -91,6 +91,7 @@ function HomeContent() {
         facebook: '',
         blog: '',
         tiktok: '',
+        threads: '',
         youtube: '',
         email: ''
     });
@@ -183,6 +184,7 @@ function HomeContent() {
                             facebook: siteData.social_links.facebook || '',
                             blog: siteData.social_links.blog || '',
                             tiktok: siteData.social_links.tiktok || '',
+                            threads: siteData.social_links.threads || '',
                             youtube: siteData.social_links.youtube || '',
                             email: siteData.social_links.email || '',
                         });
@@ -619,6 +621,24 @@ function HomeContent() {
                         <div>
                             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Youtube size={16} /> 유튜브</label>
                             <input type="text" name="youtube" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.youtube} onChange={handleSocialChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                                틱톡
+                            </label>
+                            <input type="text" name="tiktok" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.tiktok} onChange={handleSocialChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12c-2-2-2-5 0-7s4-2 6 0"></path><path d="M12 12c2 2 2 5 0 7s-4 2-6 0"></path><path d="M12 12c-2 2-5 2-7 0s-2-4 0-6"></path><path d="M12 12c2-2 5-2 7 0s2 4 0 6"></path></svg>
+                                스레드
+                            </label>
+                            <input type="text" name="threads" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.threads} onChange={handleSocialChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Mail size={16} /> 이메일</label>
+                            <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.email} onChange={handleSocialChange} />
                         </div>
                     </div>
                 </section>

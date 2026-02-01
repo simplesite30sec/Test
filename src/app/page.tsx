@@ -74,9 +74,9 @@ export default function LandingPage() {
             <h2 className="text-3xl font-bold mb-4">투명한 요금제</h2>
             <p className="text-gray-500 mb-12">5시간 무료 체험 후, 원하는 플랜을 선택하세요.</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch max-w-xl mx-auto">
               {/* Basic Plan */}
-              <div className="bg-white border-2 border-gray-200 p-10 rounded-3xl shadow-lg">
+              <div className="bg-white p-10 rounded-3xl shadow-xl border border-gray-100 flex-1">
                 <h3 className="text-2xl font-bold mb-2 text-gray-900">기본 플랜</h3>
                 <div className="text-5xl font-bold mb-2 text-gray-900">9,900원<span className="text-xl text-gray-400 font-normal">/년</span></div>
                 <p className="text-gray-400 mb-8">한 달 1,000원도 안 되는 가격</p>
@@ -90,25 +90,6 @@ export default function LandingPage() {
 
                 <Link href="/login" className="block w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition">
                   무료 체험 시작
-                </Link>
-              </div>
-
-              {/* Pro Plan */}
-              <div className="bg-black text-white p-10 rounded-3xl shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-bold px-4 py-1.5 rounded-bl-xl">✨ PRO</div>
-                <h3 className="text-2xl font-bold mb-2">프로 플랜</h3>
-                <div className="text-5xl font-bold mb-2">49,900원<span className="text-xl text-gray-400 font-normal">/년</span></div>
-                <p className="text-gray-400 mb-8">비즈니스를 위한 프리미엄 기능</p>
-
-                <ul className="text-left space-y-4 mb-10 text-gray-300">
-                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 기본 플랜 모든 기능</li>
-                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 고급 디자인 커스터마이징</li>
-                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 우선 고객 지원</li>
-                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 커스텀 도메인 연결 (추가결제)</li>
-                </ul>
-
-                <Link href="/login" className="block w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 rounded-xl hover:opacity-90 transition">
-                  프로로 시작
                 </Link>
               </div>
             </div>
