@@ -54,13 +54,14 @@ export default function DashboardPage() {
         // { id: 'domain', name: '개인 도메인 연결', price: 15000, desc: '나만의 도메인(com, kr)을 연결하세요.' }
     ];
 
+
     const openStore = async (siteId: string) => {
         setSelectedSiteId(siteId);
         setShowStore(true);
-        // Fetch current addons
-        const { data } = await supabase.from('site_addons').select('addon_type, config').eq('site_id', siteId).eq('is_active', true);
+        // Fetch current addons (including is_active state)
+        const { data } = await supabase.from('site_addons').select('addon_type, config, is_active').eq('site_id', siteId);
         if (data) {
-            setSiteAddons(data.map(d => d.addon_type));
+            setSiteAddons(data.filter(d => d.is_active).map(d => d.addon_type));
             const inquiryAddon = data.find(d => d.addon_type === 'inquiry');
             if (inquiryAddon?.config?.notification_email) {
                 setNotificationEmail(inquiryAddon.config.notification_email);
@@ -70,39 +71,93 @@ export default function DashboardPage() {
         }
     };
 
+    // Toggle addon on/off (for already installed addons)
+    const handleToggleAddon = async (addonId: string, currentlyActive: boolean) => {
+        if (!selectedSiteId) return;
+
+        const { error } = await supabase
+            .from('site_addons')
+            .update({ is_active: !currentlyActive })
+            .eq('site_id', selectedSiteId)
+            .eq('addon_type', addonId);
+
+        if (!error) {
+            if (currentlyActive) {
+                setSiteAddons(siteAddons.filter(id => id !== addonId));
+                alert('기능이 비활성화되었습니다.');
+            } else {
+                setSiteAddons([...siteAddons, addonId]);
+                alert('기능이 활성화되었습니다.');
+            }
+            // Update allSiteAddons
+            setAllSiteAddons(prev => ({
+                ...prev,
+                [selectedSiteId]: currentlyActive
+                    ? (prev[selectedSiteId] || []).filter(id => id !== addonId)
+                    : Array.from(new Set([...(prev[selectedSiteId] || []), addonId]))
+            }));
+        } else {
+            alert('작업 실패');
+        }
+    };
+
+    // Install new addon
     const handleInstallAddon = async (addonId: string, price: number) => {
         if (!selectedSiteId) return;
 
-        // Logic: specific payment flow or free depending on current status?
-        // User said: "Free during trial".
         const site = sites.find(s => s.id === selectedSiteId) || allSites.find(s => s.id === selectedSiteId);
         if (!site) return;
 
+        // Validation for inquiry addon
+        if (addonId === 'inquiry' && !notificationEmail) {
+            alert('알림 받을 이메일을 입력해주세요.');
+            return;
+        }
+
         if (site.is_paid) {
-            // Already owned site -> Need Payment (Mock for now)
+            // Owned site -> Need Payment (Mock for now)
             if (!confirm(`${price.toLocaleString()}원 결제가 필요합니다. (현재는 모의 결제)`)) return;
         } else {
             // Trial -> Free
             alert('무료 체험 기간 중에는 무료로 추가됩니다!');
         }
 
-        const { error } = await supabase.from('site_addons').upsert({
+        const { error } = await supabase.from('site_addons').insert({
             site_id: selectedSiteId,
             addon_type: addonId,
             config: addonId === 'inquiry' ? { notification_email: notificationEmail } : {},
             is_active: true
-        }, { onConflict: 'site_id, addon_type' });
-
-        const isInstalled = siteAddons.includes(addonId);
+        });
 
         if (!error) {
-            alert(isInstalled ? '설정이 변경되었습니다.' : '기능이 추가되었습니다!');
-            if (!isInstalled) setSiteAddons([...siteAddons, addonId]);
-            // Update allSiteAddons locally
+            alert('기능이 추가되었습니다!');
+            setSiteAddons([...siteAddons, addonId]);
             setAllSiteAddons(prev => ({
                 ...prev,
                 [selectedSiteId]: Array.from(new Set([...(prev[selectedSiteId] || []), addonId]))
             }));
+        } else {
+            alert('작업 실패');
+        }
+    };
+
+    // Update addon settings (for inquiry email)
+    const handleUpdateSettings = async (addonId: string) => {
+        if (!selectedSiteId) return;
+
+        if (addonId === 'inquiry' && !notificationEmail) {
+            alert('알림 받을 이메일을 입력해주세요.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('site_addons')
+            .update({ config: { notification_email: notificationEmail } })
+            .eq('site_id', selectedSiteId)
+            .eq('addon_type', addonId);
+
+        if (!error) {
+            alert('설정이 변경되었습니다.');
         } else {
             alert('작업 실패');
         }
@@ -580,36 +635,64 @@ export default function DashboardPage() {
                                     {availableAddons.map(addon => {
                                         const isInstalled = siteAddons.includes(addon.id);
                                         return (
-                                            <div key={addon.id} className="bg-white p-5 rounded-2xl border border-gray-200 flex justify-between items-center shadow-sm hover:shadow-md transition">
-                                                <div>
-                                                    <h4 className="font-bold text-lg text-gray-900">{addon.name}</h4>
-                                                    <p className="text-sm text-gray-500 mb-2">{addon.desc}</p>
-                                                    <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
-                                                        {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
-                                                    </span>
+                                            <div key={addon.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-bold text-lg text-gray-900">{addon.name}</h4>
+                                                        <p className="text-sm text-gray-500 mb-2">{addon.desc}</p>
+                                                        <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                            {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
+                                                        </span>
+                                                    </div>
 
-                                                    {addon.id === 'inquiry' && (
-                                                        <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
-                                                            <label className="block text-[10px] font-bold text-gray-400 mb-1">알림 받을 이메일</label>
-                                                            <input
-                                                                type="email"
-                                                                placeholder="example@email.com"
-                                                                value={notificationEmail}
-                                                                onChange={(e) => setNotificationEmail(e.target.value)}
-                                                                className="w-full bg-transparent text-sm border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
-                                                            />
-                                                        </div>
-                                                    )}
+                                                    {/* Action Buttons */}
+                                                    <div className="flex items-center gap-2 ml-4">
+                                                        {isInstalled ? (
+                                                            <>
+                                                                {/* Toggle Button */}
+                                                                <button
+                                                                    onClick={() => handleToggleAddon(addon.id, true)}
+                                                                    className="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100 border border-green-200"
+                                                                    title="클릭하여 비활성화"
+                                                                >
+                                                                    <CheckCircle size={18} /> 사용 중
+                                                                </button>
+
+                                                                {/* Settings Button (only for inquiry) */}
+                                                                {addon.id === 'inquiry' && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateSettings(addon.id)}
+                                                                        className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition"
+                                                                        title="설정 변경"
+                                                                    >
+                                                                        ⚙️
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleInstallAddon(addon.id, addon.price)}
+                                                                className="px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95"
+                                                            >
+                                                                <Plus size={18} /> 추가하기
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleInstallAddon(addon.id, addon.price)}
-                                                    className={`px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${isInstalled
-                                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md transform active:scale-95'
-                                                        : 'bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95'
-                                                        }`}
-                                                >
-                                                    {isInstalled ? <><CheckCircle size={18} /> 설정 변경</> : <><Plus size={18} /> 추가하기</>}
-                                                </button>
+
+                                                {/* Email Input for Inquiry (only show when installed or adding) */}
+                                                {addon.id === 'inquiry' && (
+                                                    <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                                        <label className="block text-[10px] font-bold text-gray-400 mb-1">알림 받을 이메일</label>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="example@email.com"
+                                                            value={notificationEmail}
+                                                            onChange={(e) => setNotificationEmail(e.target.value)}
+                                                            className="w-full bg-transparent text-sm border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
