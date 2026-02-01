@@ -40,6 +40,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [discountAmount, setDiscountAmount] = useState(0);
     const [finalPrice, setFinalPrice] = useState(9900);
     const [isCouponApplied, setIsCouponApplied] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     const verifyCoupon = async () => {
         if (!couponCode.trim()) {
@@ -215,53 +216,16 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         <AlertTriangle className="w-10 h-10 text-red-500" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-3">체험 시간이 만료되었습니다</h1>
-                    <p className="text-gray-500 mb-6">
+                    <p className="text-gray-500 mb-8">
                         5시간 무료 체험이 종료되었습니다.<br />
                         결제하시면 사이트를 계속 이용하실 수 있습니다.
                     </p>
 
-                    {/* Coupon Section */}
-                    <div className="mb-6 bg-gray-50 p-4 rounded-xl">
-                        <div className="flex gap-2 mb-2">
-                            <input
-                                type="text"
-                                placeholder="쿠폰 코드 입력"
-                                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value)}
-                            />
-                            <button
-                                onClick={verifyCoupon}
-                                className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm whitespace-nowrap"
-                            >
-                                적용
-                            </button>
-                        </div>
-                        {couponMessage && <p className={`text-sm ${isCouponApplied ? 'text-green-600' : 'text-red-500'}`}>{couponMessage}</p>}
-                    </div>
-
-                    <div className="mb-8 border-t pt-4">
-                        <div className="flex justify-between text-gray-600 mb-1">
-                            <span>상품 금액</span>
-                            <span>9,900원</span>
-                        </div>
-                        {isCouponApplied && (
-                            <div className="flex justify-between text-green-600 mb-1">
-                                <span>쿠폰 할인</span>
-                                <span>- {discountAmount.toLocaleString()}원</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-xl font-bold text-gray-900 mt-2">
-                            <span>최종 결제 금액</span>
-                            <span>{finalPrice.toLocaleString()}원</span>
-                        </div>
-                    </div>
-
                     <button
-                        onClick={handlePayment}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition"
+                        onClick={() => setShowPaymentModal(true)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl"
                     >
-                        {finalPrice === 0 ? "무료로 이용 시작하기" : `${finalPrice.toLocaleString()}원 결제하기`}
+                        프리미엄 업그레이드 (9,900원)
                     </button>
                 </div>
             </div>
@@ -288,13 +252,105 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200">
+            {/* Payment Modal */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative animate-fadeIn">
+                        <button
+                            onClick={() => setShowPaymentModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-bold mb-2">프리미엄 멤버십 업그레이드</h2>
+                            <p className="text-gray-500">1년 동안 제한 없이 홈페이지를 운영하세요!</p>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="bg-gray-50 p-4 rounded-xl mb-6 flex justify-between items-center border border-gray-100">
+                            <span className="font-medium text-gray-700">1년 이용권</span>
+                            <span className="font-bold text-gray-900">9,900원</span>
+                        </div>
+
+                        {/* Coupon Section */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">쿠폰 코드</label>
+                            <div className="flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    placeholder="쿠폰 번호를 입력하세요"
+                                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value)}
+                                />
+                                <button
+                                    onClick={verifyCoupon}
+                                    className="bg-gray-800 text-white px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-900 transition whitespace-nowrap"
+                                >
+                                    적용
+                                </button>
+                            </div>
+                            {couponMessage && <p className={`text-sm ${isCouponApplied ? 'text-green-600 font-medium' : 'text-red-500'}`}>{couponMessage}</p>}
+                        </div>
+
+                        <div className="border-t border-gray-100 pt-6 mb-8">
+                            <div className="flex justify-between text-gray-500 mb-2">
+                                <span>상품 금액</span>
+                                <span>9,900원</span>
+                            </div>
+                            {isCouponApplied && (
+                                <div className="flex justify-between text-green-600 mb-2">
+                                    <span>쿠폰 할인</span>
+                                    <span>- {discountAmount.toLocaleString()}원</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-end mt-4">
+                                <span className="text-lg font-bold text-gray-900">최종 결제 금액</span>
+                                <span className="text-3xl font-bold text-blue-600">{finalPrice.toLocaleString()}원</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handlePayment}
+                            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 ${finalPrice === 0
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                                : 'bg-[#FAE100] text-[#3b1e1e] hover:bg-[#F7D600]'
+                                }`}
+                        >
+                            {finalPrice === 0 ? "무료로 시작하기" : "카카오페이로 3초 만에 결제"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Premium Status Banner */}
+            {isPaid && expiresAt && (
+                <div className="fixed top-0 left-0 right-0 bg-blue-600/90 backdrop-blur-md text-white py-2 px-6 text-center text-sm font-medium z-[60] shadow-sm flex justify-center items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+                    <span>프리미엄 멤버십 이용 중</span>
+                    <span className="opacity-75 mx-1">|</span>
+                    <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
+                    <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
+                        D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                    </span>
+                </div>
+            )}
+
             {/* Trial Timer Banner */}
             {!isPaid && timeLeft && (
-                <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 px-4 text-center text-sm font-medium z-[60]">
-                    <Clock className="inline-block w-4 h-4 mr-2" />
-                    체험 남은 시간: <span className="font-bold">{timeLeft}</span>
-                    <button onClick={handlePayment} className="ml-4 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-50 transition">
-                        지금 결제
+                <div className="fixed top-0 left-0 right-0 bg-gray-900/90 backdrop-blur-md text-white py-3 px-6 text-center text-sm font-medium z-[60] shadow-md flex justify-center items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-orange-400" />
+                        <span className="text-gray-300">무료 체험 종료까지:</span>
+                        <span className="font-mono font-bold text-orange-400 text-base tabular-nums">{timeLeft}</span>
+                    </div>
+                    <button
+                        onClick={() => setShowPaymentModal(true)}
+                        className="bg-white text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 transition shadow-sm"
+                    >
+                        지금 결제하고 평생 소장하기
                     </button>
                 </div>
             )}
@@ -488,7 +544,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {/* Actions */}
             <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
                 <button
-                    onClick={handlePayment}
+                    onClick={() => setShowPaymentModal(true)}
                     className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
                     title="결제 및 게시"
                 >

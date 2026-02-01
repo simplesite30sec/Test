@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Check, Star, Zap, Shield, Layout, Smartphone } from 'lucide-react';
+import UserStatusBadge from '@/components/UserStatusBadge';
 
 export const dynamic = 'force-static';
 
@@ -18,9 +19,7 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-black transition">가격 정책</a>
             <a href="#faq" className="hover:text-black transition">자주 묻는 질문</a>
           </nav>
-          <Link href="/login" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">
-            5시간 무료 체험
-          </Link>
+          <UserStatusBadge />
         </div>
       </header>
 
