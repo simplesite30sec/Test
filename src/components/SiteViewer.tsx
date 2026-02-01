@@ -36,6 +36,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [isExpired, setIsExpired] = useState(false);
 
+    // Coupon State
     const [couponCode, setCouponCode] = useState('');
     const [couponMessage, setCouponMessage] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
@@ -43,20 +44,46 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [isCouponApplied, setIsCouponApplied] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-    // Owner Check (Moved to top level)
-    const [isOwner, setIsOwner] = useState(false);
-
+    // Initial Data Loading from LocalStorage (Backup)
     useEffect(() => {
-        const checkOwner = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            // Simple check: if user exists and site has name (just ensuring we have data), assume owner for now 
-            // in this context since we don't have user_id in local SiteData type yet or valid RLS check on client
-            if (user) {
-                setIsOwner(true);
+        if (!data) {
+            const localData = localStorage.getItem(`site_${id}`);
+            if (localData) {
+                try {
+                    setData(JSON.parse(localData));
+                } catch (e) {
+                    console.error("Failed to parse local data", e);
+                }
             }
+            setLoading(false);
+        }
+    }, [data, id]);
+
+    // Countdown timer for trial expiration
+    useEffect(() => {
+        if (isPaid || !expiresAt) return;
+
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const expireTime = new Date(expiresAt).getTime();
+            const diff = expireTime - now;
+
+            if (diff <= 0) {
+                setIsExpired(true);
+                setTimeLeft('만료됨');
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft(`${hours}시간 ${minutes}분 ${seconds}초`);
         };
-        checkOwner();
-    }, [data]);
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [expiresAt, isPaid]);
 
     const verifyCoupon = async () => {
         if (!couponCode.trim()) {
