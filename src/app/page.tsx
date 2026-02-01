@@ -18,8 +18,8 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-black transition">가격 정책</a>
             <a href="#faq" className="hover:text-black transition">자주 묻는 질문</a>
           </nav>
-          <Link href="/build" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">
-            홈페이지 만들기
+          <Link href="/login" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">
+            5시간 무료 체험
           </Link>
         </div>
       </header>
@@ -27,6 +27,7 @@ export default function LandingPage() {
       <main className="pt-24">
         {/* Hero */}
         <section className="px-6 py-20 md:py-32 text-center max-w-5xl mx-auto">
+          <div className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold mb-6">🎁 5시간 무료 체험</div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight">
             단 30초 만에 만드는 <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">나만의 웹사이트</span>
@@ -35,10 +36,10 @@ export default function LandingPage() {
             디자인 몰라도 괜찮습니다. 빈칸만 채우면, 비즈니스를 위한 완벽한 반응형 홈페이지가 자동으로 완성됩니다.
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            <Link href="/build" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-200 transition transform hover:scale-105">
-              지금 바로 만들기
+            <Link href="/login" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-200 transition transform hover:scale-105">
+              5시간 무료 체험 시작하기
             </Link>
-            <span className="text-sm text-gray-400 font-medium">체험은 100% 무료입니다.</span>
+            <span className="text-sm text-gray-400 font-medium">결제 정보 없이 바로 시작!</span>
           </div>
         </section>
 
@@ -70,26 +71,47 @@ export default function LandingPage() {
 
         {/* Pricing */}
         <section id="pricing" className="px-6 py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">단 하나의 투명한 요금제</h2>
-            <p className="text-gray-500 mb-12">숨겨진 비용 없이, 모든 기능을 누리세요.</p>
+          <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">투명한 요금제</h2>
+            <p className="text-gray-500 mb-12">5시간 무료 체험 후, 원하는 플랜을 선택하세요.</p>
 
-            <div className="bg-black text-white p-12 rounded-3xl shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-blue-600 text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
-              <h3 className="text-2xl font-bold mb-2">프리미엄 플랜</h3>
-              <div className="text-5xl font-bold mb-2">9,900원<span className="text-xl text-gray-400 font-normal">/연</span></div>
-              <p className="text-gray-400 mb-8">한 달 1,000원도 안 되는 가격</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Basic Plan */}
+              <div className="bg-white border-2 border-gray-200 p-10 rounded-3xl shadow-lg">
+                <h3 className="text-2xl font-bold mb-2 text-gray-900">기본 플랜</h3>
+                <div className="text-5xl font-bold mb-2 text-gray-900">9,900원<span className="text-xl text-gray-400 font-normal">/년</span></div>
+                <p className="text-gray-400 mb-8">한 달 1,000원도 안 되는 가격</p>
 
-              <ul className="text-left max-w-xs mx-auto space-y-4 mb-10 text-gray-300">
-                <li className="flex items-center gap-3"><Check className="text-blue-500" /> 무제한 트래픽 제공</li>
-                <li className="flex items-center gap-3"><Check className="text-blue-500" /> 호스팅 비용 무료</li>
-                <li className="flex items-center gap-3"><Check className="text-blue-500" /> 모바일 자동 최적화</li>
-                <li className="flex items-center gap-3"><Check className="text-blue-500" /> 24시간 고객 지원</li>
-              </ul>
+                <ul className="text-left space-y-4 mb-10 text-gray-600">
+                  <li className="flex items-center gap-3"><Check className="text-green-500" /> 무제한 트래픽 제공</li>
+                  <li className="flex items-center gap-3"><Check className="text-green-500" /> 호스팅 비용 무료</li>
+                  <li className="flex items-center gap-3"><Check className="text-green-500" /> 모바일 자동 최적화</li>
+                  <li className="flex items-center gap-3"><Check className="text-green-500" /> 이메일 고객 지원</li>
+                </ul>
 
-              <Link href="/build" className="block w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-gray-100 transition">
-                지금 시작하기
-              </Link>
+                <Link href="/login" className="block w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition">
+                  무료 체험 시작
+                </Link>
+              </div>
+
+              {/* Pro Plan */}
+              <div className="bg-black text-white p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-bold px-4 py-1.5 rounded-bl-xl">✨ PRO</div>
+                <h3 className="text-2xl font-bold mb-2">프로 플랜</h3>
+                <div className="text-5xl font-bold mb-2">49,900원<span className="text-xl text-gray-400 font-normal">/년</span></div>
+                <p className="text-gray-400 mb-8">비즈니스를 위한 프리미엄 기능</p>
+
+                <ul className="text-left space-y-4 mb-10 text-gray-300">
+                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 기본 플랜 모든 기능</li>
+                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 고급 디자인 커스터마이징</li>
+                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 우선 고객 지원</li>
+                  <li className="flex items-center gap-3"><Check className="text-purple-400" /> 커스텀 도메인 연결 (추가결제)</li>
+                </ul>
+
+                <Link href="/login" className="block w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 rounded-xl hover:opacity-90 transition">
+                  프로로 시작
+                </Link>
+              </div>
             </div>
           </div>
         </section>

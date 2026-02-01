@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star } from 'lucide-react';
+import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 type PortfolioItem = {
     id: string;
@@ -25,7 +26,39 @@ function HomeContent() {
     const searchParams = useSearchParams();
     const editId = searchParams.get('edit');
 
+    const [user, setUser] = useState<User | null>(null);
+    const [authLoading, setAuthLoading] = useState(true);
     const [loading, setLoading] = useState(false);
+
+    // Auth Check
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/login');
+                return;
+            }
+            setUser(user);
+            setAuthLoading(false);
+        };
+        checkAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                router.push('/login');
+            } else if (session?.user) {
+                setUser(session.user);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [router]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
+
     const [formData, setFormData] = useState({
         name: '',
         slogan: '',
@@ -270,12 +303,38 @@ function HomeContent() {
         }
     };
 
+    if (authLoading) {
+        return (
+            <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-500">로딩 중...</p>
+                </div>
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10">
-                <div className="bg-blue-600 p-8 text-white text-center">
-                    <h1 className="text-3xl font-bold mb-2">초간단 홈페이지 빌더 v0.3</h1>
-                    <p className="opacity-90">{editId ? '정보 수정' : '필요한 정보만 입력하세요.'}</p>
+                <div className="bg-blue-600 p-8 text-white">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2">🎁 5시간 무료 체험</h1>
+                            <p className="opacity-90">{editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!'}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition"
+                        >
+                            <LogOut size={14} />
+                            로그아웃
+                        </button>
+                    </div>
+                    {user && (
+                        <p className="mt-4 text-sm opacity-75">👤 {user.email}</p>
+                    )}
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-8">
