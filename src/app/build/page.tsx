@@ -288,7 +288,7 @@ function HomeContent() {
                     if (error) throw error;
                     resultId = data.id;
                 }
-                router.push(`/site/${resultId}`);
+                router.push(`/site?id=${resultId}`);
             } catch (dbError) {
                 console.error("DB Operation Failed, switching to Mock Mode", dbError);
                 alert('Supabase 연결/저장 실패. 로컬 저장소(LocalStorage)를 사용합니다.');
@@ -303,7 +303,7 @@ function HomeContent() {
                 }));
 
                 localStorage.setItem(`site_${resultId}`, JSON.stringify(siteData));
-                router.push(`/site/${resultId}`);
+                router.push(`/site?id=${resultId}`);
             }
         } catch (error) {
             console.error('Critical Error:', error);
