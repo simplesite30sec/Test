@@ -14,7 +14,7 @@ export default async function SitePage({ params }: { params: { id: string } }) {
             .eq('id', params.id)
             .single();
         if (!error) site = data;
-    } catch (e) {
+    } catch {
         // Supabase fetch failed (e.g. invalid URL or offline)
     }
 

@@ -22,7 +22,8 @@ type SiteData = {
 export default function SiteViewer({ initialData, id }: { initialData: SiteData | null, id: string }) {
     const [data, setData] = useState<SiteData | null>(initialData);
     const [loading, setLoading] = useState(!initialData);
-    const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
+    const [loading, setLoading] = useState(!initialData);
+    // const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
     const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
 
     useEffect(() => {
@@ -45,8 +46,9 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
             const customerKey = "ANONYMOUS";
             try {
                 const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
+                const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
                 paymentWidgetRef.current = loadedWidget;
-                setPaymentWidget(loadedWidget);
+                // setPaymentWidget(loadedWidget);
             } catch (error) {
                 console.error("Failed to load payment widget:", error);
             }
@@ -156,7 +158,7 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
 
                             {/* Carousel Container */}
                             <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
-                                {portfolio.map((item: any, idx: number) => (
+                                {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
                                     <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
                                         {item.image_url ? (
                                             <div className="h-64 overflow-hidden bg-gray-200">
@@ -198,7 +200,7 @@ export default function SiteViewer({ initialData, id }: { initialData: SiteData 
                                                 <Star key={i} size={16} className={`${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                                             ))}
                                         </div>
-                                        <p className="text-gray-700 mb-6 leading-relaxed">"{review.content}"</p>
+                                        <p className="text-gray-700 mb-6 leading-relaxed">&quot;{review.content}&quot;</p>
                                         <p className="font-bold text-gray-900 border-t border-gray-200 pt-4 text-sm">{review.name}</p>
                                     </div>
                                 ))}
