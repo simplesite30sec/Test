@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter, ShoppingBag, X } from 'lucide-react';
+import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter, ShoppingBag, X, CheckCircle } from 'lucide-react';
 
 type Site = {
     id: string;
@@ -339,11 +339,23 @@ export default function DashboardPage() {
                                                                     <Calendar size={12} />
                                                                     <span>생성일: {new Date(site.created_at).toLocaleDateString()}</span>
                                                                 </div>
-                                                                <div className="flex items-center gap-2 text-blue-500 font-medium">
-                                                                    <Eye size={12} />
-                                                                    <a href={`/site?id=${site.id}`} target="_blank" rel="noreferrer" className="hover:underline">
-                                                                        사이트 보기
-                                                                    </a>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-2 text-blue-500 font-medium">
+                                                                        <Eye size={12} />
+                                                                        <a href={`/site?id=${site.id}`} target="_blank" rel="noreferrer" className="hover:underline">
+                                                                            사이트 보기
+                                                                        </a>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDelete(site.id);
+                                                                        }}
+                                                                        className="text-red-400 hover:text-red-600 transition p-1"
+                                                                        title="삭제"
+                                                                    >
+                                                                        <Trash2 size={12} />
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -541,8 +553,8 @@ export default function DashboardPage() {
                                                     onClick={() => !isInstalled && handleInstallAddon(addon.id, addon.price)}
                                                     disabled={isInstalled}
                                                     className={`px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${isInstalled
-                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                            : 'bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95'
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95'
                                                         }`}
                                                 >
                                                     {isInstalled ? <><CheckCircle size={18} /> 설치됨</> : <><Plus size={18} /> 추가하기</>}

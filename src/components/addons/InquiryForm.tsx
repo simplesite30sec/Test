@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Send, Mail } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 export default function InquiryForm({ siteId }: { siteId: string }) {
     const [formData, setFormData] = useState({ name: '', contact: '', message: '' });

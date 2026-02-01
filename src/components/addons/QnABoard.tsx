@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { MessageCircle, Send, Lock, Unlock } from 'lucide-react';
+import { MessageCircle, Lock, Unlock } from 'lucide-react';
 
 type Post = {
     id: string;
@@ -18,11 +18,7 @@ export default function QnABoard({ siteId, canManage }: { siteId: string, canMan
     const [showForm, setShowForm] = useState(false);
     const [newPost, setNewPost] = useState({ title: '', content: '', author: '익명', isSecret: false, password: '' });
 
-    useEffect(() => {
-        loadPosts();
-    }, [siteId]);
-
-    const loadPosts = async () => {
+    const loadPosts = useCallback(async () => {
         const { data } = await supabase
             .from('site_posts')
             .select('*')
@@ -30,7 +26,11 @@ export default function QnABoard({ siteId, canManage }: { siteId: string, canMan
             .eq('type', 'qna')
             .order('created_at', { ascending: false });
         if (data) setPosts(data);
-    };
+    }, [siteId]);
+
+    useEffect(() => {
+        loadPosts();
+    }, [loadPosts]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
