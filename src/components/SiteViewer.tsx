@@ -460,9 +460,9 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         );
     }
 
-    // New destructuring and variables
-    const { hero_image_url: newHeroImageUrl, slogan: newSlogan, description: newDescription, name: newName, phone: newPhone, address: newAddress, portfolio: newPortfolio, reviews: newReviews, map_links: newMapLinks, social_links: newSocialLinks, section_order, section_titles, google_map, font_family } = data;
-    const overlayOpacityNew = (data?.hero_opacity ?? 50) / 100;
+
+    // Extract needed data
+    const { section_titles, google_map, font_family } = data;
 
     // Default section titles
     const titles = {
@@ -478,6 +478,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const fontLink = font_family && font_family !== 'Inter'
         ? `https://fonts.googleapis.com/css2?family=${font_family.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`
         : null;
+
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200" style={{ fontFamily: font_family || 'Inter, sans-serif' }}>
