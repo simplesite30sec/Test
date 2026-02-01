@@ -5,7 +5,7 @@ import { supabase } from '@/utils/supabase/client';
 import { Send } from 'lucide-react';
 
 export default function InquiryForm({ siteId }: { siteId: string }) {
-    const [formData, setFormData] = useState({ name: '', contact: '', message: '' });
+    const [formData, setFormData] = useState({ name: '', contact: '', email: '', message: '' });
     const [sending, setSending] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -16,6 +16,7 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
             site_id: siteId,
             name: formData.name,
             contact: formData.contact,
+            email: formData.email,
             message: formData.message
         });
 
@@ -23,7 +24,7 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
 
         if (!error) {
             alert('문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.');
-            setFormData({ name: '', contact: '', message: '' });
+            setFormData({ name: '', contact: '', email: '', message: '' });
         } else {
             alert('전송 실패. 잠시 후 다시 시도해주세요.');
         }
@@ -62,6 +63,17 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
                                 required
                             />
                         </div>
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-xs font-bold text-gray-500 mb-2 ml-1">이메일</label>
+                        <input
+                            type="email"
+                            placeholder="example@email.com"
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition outline-none"
+                            value={formData.email}
+                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            required
+                        />
                     </div>
                     <div className="mb-8">
                         <label className="block text-xs font-bold text-gray-500 mb-2 ml-1">문의 내용</label>

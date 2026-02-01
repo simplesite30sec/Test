@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { MessageCircle, Lock, Unlock } from 'lucide-react';
+import { MessageCircle, Lock, Unlock, Trash2 } from 'lucide-react';
 
 type Post = {
     id: string;
@@ -31,6 +31,17 @@ export default function QnABoard({ siteId, canManage }: { siteId: string, canMan
     useEffect(() => {
         loadPosts();
     }, [loadPosts]);
+
+    const handleDelete = async (postId: string) => {
+        if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
+        const { error } = await supabase.from('site_posts').delete().eq('id', postId);
+        if (!error) {
+            alert('삭제되었습니다.');
+            loadPosts();
+        } else {
+            alert('삭제 실패');
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,7 +151,16 @@ export default function QnABoard({ siteId, canManage }: { siteId: string, canMan
                                         </p>
                                     </div>
                                     {canManage && (
-                                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold opacity-0 group-hover:opacity-100 transition">관리자 권한</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold">관리자 권한</span>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
+                                                className="text-gray-400 hover:text-red-500 transition"
+                                                title="게시글 삭제"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                                 {(canManage || !post.is_secret) && (

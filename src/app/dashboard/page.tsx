@@ -45,6 +45,8 @@ export default function DashboardPage() {
     const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
     const [showStore, setShowStore] = useState(false);
     const [siteAddons, setSiteAddons] = useState<string[]>([]); // Addons for selected site
+    const [notificationEmail, setNotificationEmail] = useState(''); // For inquiry addon
+    const [allSiteAddons, setAllSiteAddons] = useState<Record<string, string[]>>({}); // siteId -> addonTypes
 
     const availableAddons = [
         { id: 'inquiry', name: '1:1 문의하기 폼', price: 3000, desc: '고객의 문의를 바로 받아보세요.' },
@@ -56,8 +58,16 @@ export default function DashboardPage() {
         setSelectedSiteId(siteId);
         setShowStore(true);
         // Fetch current addons
-        const { data } = await supabase.from('site_addons').select('addon_type').eq('site_id', siteId).eq('is_active', true);
-        if (data) setSiteAddons(data.map(d => d.addon_type));
+        const { data } = await supabase.from('site_addons').select('addon_type, config').eq('site_id', siteId).eq('is_active', true);
+        if (data) {
+            setSiteAddons(data.map(d => d.addon_type));
+            const inquiryAddon = data.find(d => d.addon_type === 'inquiry');
+            if (inquiryAddon?.config?.notification_email) {
+                setNotificationEmail(inquiryAddon.config.notification_email);
+            } else {
+                setNotificationEmail(user?.email || '');
+            }
+        }
     };
 
     const handleInstallAddon = async (addonId: string, price: number) => {
@@ -76,22 +86,25 @@ export default function DashboardPage() {
             alert('무료 체험 기간 중에는 무료로 추가됩니다!');
         }
 
-        const { error } = await supabase.from('site_addons').insert({
+        const { error } = await supabase.from('site_addons').upsert({
             site_id: selectedSiteId,
             addon_type: addonId,
-            config: {}
-        });
+            config: addonId === 'inquiry' ? { notification_email: notificationEmail } : {},
+            is_active: true
+        }, { onConflict: 'site_id, addon_type' });
+
+        const isInstalled = siteAddons.includes(addonId);
 
         if (!error) {
-            alert('기능이 추가되었습니다!');
-            setSiteAddons([...siteAddons, addonId]);
-            // Reload logic if needed, or just update local state
+            alert(isInstalled ? '설정이 변경되었습니다.' : '기능이 추가되었습니다!');
+            if (!isInstalled) setSiteAddons([...siteAddons, addonId]);
+            // Update allSiteAddons locally
+            setAllSiteAddons(prev => ({
+                ...prev,
+                [selectedSiteId]: Array.from(new Set([...(prev[selectedSiteId] || []), addonId]))
+            }));
         } else {
-            // Uniqueness violation usually means already exists, maybe inactive?
-            // Try update
-            await supabase.from('site_addons').update({ is_active: true }).eq('site_id', selectedSiteId).eq('addon_type', addonId);
-            setSiteAddons([...siteAddons, addonId]);
-            alert('기능이 활성화되었습니다!');
+            alert('작업 실패');
         }
     };
 
@@ -128,6 +141,25 @@ export default function DashboardPage() {
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (payData) setPayments(payData as Payment[]);
+            }
+
+            // Fetch All Addons for User's Sites
+            const siteIds = data?.map(s => s.id) || [];
+            if (siteIds.length > 0) {
+                const { data: addons } = await supabase
+                    .from('site_addons')
+                    .select('site_id, addon_type')
+                    .in('site_id', siteIds)
+                    .eq('is_active', true);
+
+                if (addons) {
+                    const addonMap: Record<string, string[]> = {};
+                    addons.forEach(a => {
+                        if (!addonMap[a.site_id]) addonMap[a.site_id] = [];
+                        addonMap[a.site_id].push(a.addon_type);
+                    });
+                    setAllSiteAddons(addonMap);
+                }
             }
 
             setLoading(false);
@@ -454,6 +486,13 @@ export default function DashboardPage() {
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">이미지 없음</div>
                                     )}
+                                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                                        {allSiteAddons[site.id]?.map(addon => (
+                                            <span key={addon} className="bg-white/90 backdrop-blur-md text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm border border-gray-100 flex items-center gap-1">
+                                                {addon === 'inquiry' ? '📩 문의' : addon === 'qna' ? '❓ Q&A' : addon}
+                                            </span>
+                                        ))}
+                                    </div>
                                     <div className="absolute top-4 right-4 flex gap-2">
                                         <div className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${site.status === 'active' ? 'bg-green-500' :
                                             site.status === 'paused' ? 'bg-orange-500' : 'bg-gray-500'
@@ -548,16 +587,28 @@ export default function DashboardPage() {
                                                     <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
                                                         {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
                                                     </span>
+
+                                                    {addon.id === 'inquiry' && (
+                                                        <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
+                                                            <label className="block text-[10px] font-bold text-gray-400 mb-1">알림 받을 이메일</label>
+                                                            <input
+                                                                type="email"
+                                                                placeholder="example@email.com"
+                                                                value={notificationEmail}
+                                                                onChange={(e) => setNotificationEmail(e.target.value)}
+                                                                className="w-full bg-transparent text-sm border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <button
-                                                    onClick={() => !isInstalled && handleInstallAddon(addon.id, addon.price)}
-                                                    disabled={isInstalled}
+                                                    onClick={() => handleInstallAddon(addon.id, addon.price)}
                                                     className={`px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${isInstalled
-                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md transform active:scale-95'
                                                         : 'bg-black text-white hover:bg-gray-800 shadow-md transform active:scale-95'
                                                         }`}
                                                 >
-                                                    {isInstalled ? <><CheckCircle size={18} /> 설치됨</> : <><Plus size={18} /> 추가하기</>}
+                                                    {isInstalled ? <><CheckCircle size={18} /> 설정 변경</> : <><Plus size={18} /> 추가하기</>}
                                                 </button>
                                             </div>
                                         );
