@@ -793,22 +793,14 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                         {map_links.kakao && <a href={map_links.kakao} target="_blank" rel="noopener noreferrer" className="bg-[#FAE100] text-[#3b1e1e] px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">K 카카오맵</a>}
                                                         {google_map && <a href={google_map} target="_blank" rel="noopener noreferrer" className="bg-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2"><Globe size={18} /> 구글 지도</a>}
                                                     </div>
-                                                    <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
-                                                        {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0" title="Map" allowFullScreen /> :
-                                                            map_links.kakao ? <iframe src={map_links.kakao} className="w-full h-full border-0" title="Map" allowFullScreen /> :
-                                                                google_map?.includes('/embed') ? <iframe src={google_map} className="w-full h-full border-0" title="Map" allowFullScreen /> :
-                                                                    google_map ? (
-                                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                                                            <div className="text-center p-6">
-                                                                                <Globe size={48} className="mx-auto mb-4 text-gray-400" />
-                                                                                <p className="text-gray-600 mb-4">구글 지도 미리보기를 표시할 수 없습니다.</p>
-                                                                                <a href={google_map} target="_blank" rel="noopener noreferrer" className="inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition">
-                                                                                    구글 지도에서 열기
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : null}
-                                                    </div>
+                                                    {/* Only show map iframe if we have an embeddable URL */}
+                                                    {(map_links.naver || map_links.kakao || google_map?.includes('/embed')) && (
+                                                        <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+                                                            {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                                map_links.kakao ? <iframe src={map_links.kakao} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                                    google_map?.includes('/embed') ? <iframe src={google_map} className="w-full h-full border-0" title="Map" allowFullScreen /> : null}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -872,6 +864,22 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             <footer className="bg-gray-50 py-12 border-t border-gray-200">
                 <div className="container mx-auto text-center text-gray-500 text-sm">
                     &copy; 2026 {name}. All rights reserved.
+                    {/* Logo in footer with 50% opacity */}
+                    {data?.logo_url && (
+                        <div className="mt-6 opacity-50">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={data.logo_url} alt={name} className="h-12 mx-auto object-contain" />
+                        </div>
+                    )}
+                    {/* Ownership badge for paid sites with 50% opacity */}
+                    {isPaid && expiresAt && (
+                        <div className="mt-6 opacity-50 text-xs text-gray-400">
+                            <span>사이트 소유권 보유 중</span>
+                            <span className="mx-2">|</span>
+                            <span>만료일: {new Date(expiresAt).toLocaleDateString()}</span>
+                            <span className="ml-2">D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}</span>
+                        </div>
+                    )}
                 </div>
             </footer>
         </div>
