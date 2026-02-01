@@ -190,25 +190,46 @@ export default function DashboardPage() {
         }
 
         try {
-            const res = await fetch('/api/verify-addon-coupon', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ couponCode, addonType: selectedAddon?.id })
-            });
+            // Direct Supabase call (Public Read)
+            const { data: coupon, error } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', couponCode.trim())
+                .single();
 
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                setCouponMessage(data.message);
-                setCouponValid(true);
-            } else {
-                const detailMsg = data.details ? ` (${data.details})` : '';
-                setCouponMessage((data.error || '쿠폰 검증 실패') + detailMsg);
+            if (error || !coupon) {
+                setCouponMessage('유효하지 않은 쿠폰 코드입니다.');
                 setCouponValid(false);
+                return;
             }
+
+            // Check if for addon (value 3000 or description includes addon)
+            const isAddonCoupon = coupon.value === 3000 || (coupon.description && coupon.description.includes('애드온'));
+            if (!isAddonCoupon) {
+                setCouponMessage('이 쿠폰은 애드온에 사용할 수 없습니다.');
+                setCouponValid(false);
+                return;
+            }
+
+            // Expiration check
+            if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+                setCouponMessage('만료된 쿠폰입니다.');
+                setCouponValid(false);
+                return;
+            }
+
+            // Usage check
+            if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+                setCouponMessage('사용 횟수가 초과된 쿠폰입니다.');
+                setCouponValid(false);
+                return;
+            }
+
+            setCouponMessage('쿠폰이 적용되었습니다!');
+            setCouponValid(true);
         } catch (e) {
             console.error(e);
-            setCouponMessage('쿠폰 검증 중 오류가 발생했습니다.');
+            setCouponMessage('쿠폰 확인 중 오류가 발생했습니다.');
             setCouponValid(false);
         }
     };
@@ -236,6 +257,11 @@ export default function DashboardPage() {
             }, { onConflict: 'site_id,addon_type' });
 
             if (!error) {
+                // Securely increment coupon usage count via RPC
+                if (paymentMethod === 'coupon') {
+                    await supabase.rpc('increment_coupon_usage', { coupon_code_param: couponCode });
+                }
+
                 alert(paymentMethod === 'coupon' ? '쿠폰으로 구매 완료!' : '결제 완료! (모의 결제)');
                 setSiteAddons([...siteAddons, selectedAddon.id]);
                 setPurchasedAddons(prev => ({
