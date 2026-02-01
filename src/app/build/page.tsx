@@ -224,14 +224,14 @@ function HomeContent() {
     };
 
     const validateImage = (file: File) => {
-        const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        const MAX_SIZE = 7 * 1024 * 1024; // 7MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
         if (!allowedTypes.includes(file.type)) {
-            alert(`JPG, PNG 파일만 업로드 가능합니다.\n(현재 파일: ${file.name})`);
+            alert(`JPG, PNG, WebP, GIF, SVG 파일만 업로드 가능합니다.\n(현재 파일: ${file.name})`);
             return false;
         }
         if (file.size > MAX_SIZE) {
-            alert(`이미지 크기는 2MB 이하여야 합니다.`);
+            alert(`이미지 크기는 7MB 이하여야 합니다.`);
             return false;
         }
         return true;
@@ -252,7 +252,13 @@ function HomeContent() {
     };
 
     // Portfolio Handlers
-    const addPortfolioItem = () => setPortfolio([...portfolio, { id: crypto.randomUUID(), title: '', desc: '' }]);
+    const addPortfolioItem = () => {
+        if (portfolio.length >= 15) {
+            alert('포트폴리오는 최대 15개까지 추가할 수 있습니다.');
+            return;
+        }
+        setPortfolio([...portfolio, { id: crypto.randomUUID(), title: '', desc: '' }]);
+    };
     const removePortfolioItem = (id: string) => setPortfolio(portfolio.filter(item => item.id !== id));
     const updatePortfolioItem = (id: string, field: keyof PortfolioItem, value: string | File) => {
         setPortfolio(portfolio.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -522,17 +528,17 @@ function HomeContent() {
                         </div>
                     </div>
                     <div>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 메인 배경 이미지 (JPG/PNG)</label>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 메인 배경 이미지 (최대 7MB)</label>
                         {heroImageUrl && (
                             <div className="mb-2 relative w-32 h-20 rounded overflow-hidden border border-gray-200">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={heroImageUrl} alt="Current Hero" className="w-full h-full object-cover" />
                             </div>
                         )}
-                        <input type="file" accept="image/jpeg, image/png" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
+                        <input type="file" accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
                     </div>
                     <div>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 로고 이미지 (JPG/PNG) - 헤더 및 파비콘</label>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 로고 이미지 - 헤더 및 파비콘</label>
                         <div className="flex items-center gap-4">
                             {(logoUrl || logoFile) && (
                                 <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
@@ -542,7 +548,7 @@ function HomeContent() {
                             )}
                             <input
                                 type="file"
-                                accept="image/jpeg, image/png, image/svg+xml"
+                                accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml"
                                 className="block flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-green-50 file:text-green-700"
                                 onChange={(e) => {
                                     if (e.target.files?.[0] && validateImage(e.target.files[0])) {
@@ -685,7 +691,7 @@ function HomeContent() {
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img src={item.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
                                         )}
-                                        <input type="file" accept="image/jpeg, image/png" className="text-xs text-gray-500" onChange={(e) => {
+                                        <input type="file" accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml" className="text-xs text-gray-500" onChange={(e) => {
                                             if (e.target.files?.[0] && validateImage(e.target.files[0])) {
                                                 updatePortfolioItem(item.id, 'file', e.target.files[0]);
                                             }
