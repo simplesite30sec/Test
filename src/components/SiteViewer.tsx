@@ -90,9 +90,10 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 successUrl: `${window.location.origin}/payment/success?id=${id}`,
                 failUrl: `${window.location.origin}/payment/fail`,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Payment request failed:", error);
-            alert(`결제 창 호출 실패: ${error?.message || error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            alert(`결제 창 호출 실패: ${errorMessage}`);
         }
     };
 
