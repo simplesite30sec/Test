@@ -91,7 +91,7 @@ function PreviewContent() {
             {/* Footer */}
             <footer className="bg-white py-12 border-t border-gray-200">
                 <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-                    <p>© 2024 {name}. All rights reserved.</p>
+                    <p>© 2026 {name}. All rights reserved.</p>
                     <div className="flex gap-6 mt-4 md:mt-0">
                         <a href="#" className="hover:text-black">Terms</a>
                         <a href="#" className="hover:text-black">Privacy</a>

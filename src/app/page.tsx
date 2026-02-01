@@ -118,7 +118,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="bg-gray-50 py-12 text-center text-sm text-gray-400">
-        &copy; 2024 SimpleSite. All rights reserved.
+        &copy; 2026 SimpleSite. All rights reserved.
       </footer>
     </div>
   );

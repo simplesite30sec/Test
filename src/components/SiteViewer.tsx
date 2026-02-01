@@ -373,8 +373,8 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             </div>
 
             <footer className="bg-gray-50 py-12 border-t border-gray-200">
-                <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-                    <p>© 2024 {name}. All rights reserved.</p>
+                <div className="container mx-auto text-center text-gray-500 text-sm">
+                    &copy; 2026 {name}. All rights reserved.
                 </div>
             </footer>
         </div>
