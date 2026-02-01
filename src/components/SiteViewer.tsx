@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle } from 'lucide-react';
-import { loadPaymentWidget, PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 
 type SiteData = {
     name: string;
@@ -33,7 +33,6 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [loading, setLoading] = useState(!initialData);
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [isExpired, setIsExpired] = useState(false);
-    const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
 
     useEffect(() => {
         if (!data) {
@@ -48,19 +47,6 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             setLoading(false);
         }
     }, [data, id]);
-
-    useEffect(() => {
-        (async () => {
-            const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
-            const customerKey = "ANONYMOUS";
-            try {
-                const loadedWidget = await loadPaymentWidget(clientKey, customerKey);
-                paymentWidgetRef.current = loadedWidget;
-            } catch (error) {
-                console.error("Failed to load payment widget:", error);
-            }
-        })();
-    }, []);
 
     // Countdown timer for trial expiration
     useEffect(() => {
@@ -89,12 +75,14 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     }, [expiresAt, isPaid]);
 
     const handlePayment = async () => {
-        if (!paymentWidgetRef.current) {
-            alert("결제 시스템을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-            return;
-        }
+        const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+
         try {
-            await paymentWidgetRef.current.requestPayment({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const tossPayments = await loadTossPayments(clientKey) as any;
+
+            await tossPayments.requestPayment('카드', {
+                amount: 9900,
                 orderId: `ORDER_${id}_${Date.now()}`,
                 orderName: "1년 이용권 (Premium)",
                 customerName: data?.name || "고객",
@@ -104,7 +92,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             });
         } catch (error) {
             console.error("Payment request failed:", error);
-            alert("결제가 취소되었거나 실패했습니다.");
+            alert("결제 창 호출에 실패했습니다.");
         }
     };
 
