@@ -517,7 +517,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 {/* Hero Section */}
                 <section
                     className="relative h-[80vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden"
-                    style={{ backgroundColor: color }}
+                    style={sectionStyle}
                 >
                     {hero_image_url && (
                         <div
