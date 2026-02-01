@@ -716,14 +716,18 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                     </div>
                                                 )}
                                             </div>
-                                            {(map_links?.naver || map_links?.kakao) && (
+                                            {(map_links?.naver || map_links?.kakao || google_map) && (
                                                 <div className="flex flex-col items-center gap-6 mb-12 w-full">
-                                                    <div className="flex justify-center gap-4">
+                                                    <div className="flex justify-center gap-4 flex-wrap">
                                                         {map_links.naver && <a href={map_links.naver} target="_blank" rel="noopener noreferrer" className="bg-[#03C75A] text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">N 네이버 지도</a>}
                                                         {map_links.kakao && <a href={map_links.kakao} target="_blank" rel="noopener noreferrer" className="bg-[#FAE100] text-[#3b1e1e] px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">K 카카오맵</a>}
+                                                        {google_map && <a href={google_map} target="_blank" rel="noopener noreferrer" className="bg-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2"><Globe size={18} /> 구글 지도</a>}
                                                     </div>
                                                     <div className="w-full max-w-4xl h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-inner border border-gray-200">
-                                                        {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0 text-gray-400 flex items-center justify-center bg-gray-50" title="Naver Map" allowFullScreen /> : <iframe src={map_links.kakao} className="w-full h-full border-0 text-gray-400 flex items-center justify-center bg-gray-50" title="Kakao Map" allowFullScreen />}
+                                                        {map_links.naver ? <iframe src={map_links.naver} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                            map_links.kakao ? <iframe src={map_links.kakao} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                                google_map ? <iframe src={google_map} className="w-full h-full border-0" title="Map" allowFullScreen /> :
+                                                                    null}
                                                     </div>
                                                 </div>
                                             )}
