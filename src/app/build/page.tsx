@@ -594,7 +594,7 @@ function HomeContent() {
                         ))}
                     </div>
                     <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
-                        💡 'Q&A'나 '문의하기'는 애드온 스토어에서 활성화해야 실제 화면에 나타납니다.
+                        💡 &apos;Q&A&apos;나 &apos;문의하기&apos;는 애드온 스토어에서 활성화해야 실제 화면에 나타납니다.
                     </div>
                 </section>
 
