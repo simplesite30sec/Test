@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
-import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle } from 'lucide-react';
+import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X } from 'lucide-react';
 import QnABoard from './addons/QnABoard';
 import InquiryForm from './addons/InquiryForm';
 
@@ -58,6 +58,9 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [activeAddons, setActiveAddons] = useState<string[]>([]);
     const [canManage, setCanManage] = useState(false); // Check if current user is owner
+
+    // Lightbox state for image expansion
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
     // Check ownership and fetch addons
     useEffect(() => {
@@ -644,7 +647,10 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                 {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
                                                     <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
                                                         {item.image_url ? (
-                                                            <div className="h-64 overflow-hidden bg-gray-200">
+                                                            <div
+                                                                className="h-64 overflow-hidden bg-gray-200 cursor-pointer"
+                                                                onClick={() => setLightboxImage(item.image_url)}
+                                                            >
                                                                 <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" />
                                                             </div>
                                                         ) : (
@@ -744,25 +750,50 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 })()}
             </main>
 
-            {/* Actions */}
-            <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
-                <button
-                    onClick={() => setShowPaymentModal(true)}
-                    className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
-                    title="결제 및 게시"
-                >
-                    <span className="font-bold hidden group-hover:block whitespace-nowrap">결제 & 사이트 게시 (9,900원)</span>
-                    <Star size={24} className="fill-white" />
-                </button>
+            {/* Actions - Only show for site owner */}
+            {canManage && (
+                <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
+                    <button
+                        onClick={() => setShowPaymentModal(true)}
+                        className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
+                        title="결제 및 게시"
+                    >
+                        <span className="font-bold hidden group-hover:block whitespace-nowrap">결제 & 사이트 게시 (9,900원)</span>
+                        <Star size={24} className="fill-white" />
+                    </button>
 
-                <a
-                    href={`/build?edit=${id}`}
-                    className="bg-black/80 hover:bg-black text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110"
-                    title="수정하기"
+                    <a
+                        href={`/build?edit=${id}`}
+                        className="bg-black/80 hover:bg-black text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110"
+                        title="수정하기"
+                    >
+                        <Edit size={24} />
+                    </a>
+                </div>
+            )
+
+            }
+
+            {/* Lightbox Modal for Image Expansion */}
+            {lightboxImage && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+                    onClick={() => setLightboxImage(null)}
                 >
-                    <Edit size={24} />
-                </a>
-            </div>
+                    <button
+                        onClick={() => setLightboxImage(null)}
+                        className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
+                    >
+                        <X size={32} />
+                    </button>
+                    <img
+                        src={lightboxImage}
+                        alt="Expanded view"
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
 
             <footer className="bg-gray-50 py-12 border-t border-gray-200">
                 <div className="container mx-auto text-center text-gray-500 text-sm">
