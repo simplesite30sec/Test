@@ -241,47 +241,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         }
     };
 
-    // Helper to convert hex to rgba
-    const hexToRgba = (hex: string, alpha: number) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    };
 
-    const overlayOpacity = hero_opacity / 100;
-    const phones = (phone || '').split('|').map((p: string) => p.trim()).filter(Boolean);
-
-    // If no image, apply transparency to the background color itself using hero_opacity
-    // If image exists, apply hero_opacity to the black overlay (existing logic)
-    const sectionStyle = hero_image_url
-        ? { backgroundColor: color }
-        : { backgroundColor: hexToRgba(color, overlayOpacity) }; // Note: overlayOpacity is 0-1. If user wants transparency, they might lower opacity.
-    // Wait, if hero_opacity is 50, overlayOpacity is 0.5.
-    // If I use it as alpha, 0.5 means 50% transparent.
-    // This matches "Background Transparency" slider intention if no image.
-
-    const handlePublish = async () => {
-        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 5시간 동안 무료 체험이 시작됩니다.')) return;
-
-        const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
-
-        const { error } = await supabase
-            .from('sites')
-            .update({
-                status: 'active',
-                expires_at: expiresAt,
-                published_at: new Date().toISOString()
-            })
-            .eq('id', id);
-
-        if (error) {
-            alert('게시 실패: ' + error.message);
-        } else {
-            alert('사이트가 성공적으로 게시되었습니다! 5시간 무료 체험이 시작됩니다.');
-            window.location.reload();
-        }
-    };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
     if (!data) return <div className="min-h-screen flex items-center justify-center">사이트를 찾을 수 없습니다. (로컬 저장소 확인 중...)</div>;

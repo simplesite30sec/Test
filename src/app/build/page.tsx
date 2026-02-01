@@ -347,7 +347,7 @@ function HomeContent() {
 
     return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10">
+            <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10">
                 <div className="bg-blue-600 p-8 text-white">
                     <div className="flex justify-between items-start">
                         <div>
@@ -528,7 +528,6 @@ function HomeContent() {
                     {loading ? '처리 중...' : (editId ? '수정 완료하기 ✨' : '홈페이지 생성하기 ✨')}
                 </button>
             </form>
-        </div>
         </main >
     );
 }
