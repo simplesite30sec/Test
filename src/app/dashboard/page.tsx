@@ -146,15 +146,29 @@ export default function DashboardPage() {
                                     ) : (
                                         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-6 bg-gray-50 p-3 rounded-lg">
                                             <AlertCircle size={16} />
-                                            <span>무료 체험 / 결제 필요</span>
+                                            <span>
+                                                무료 체험 / 결제 필요
+                                                {site.expires_at && !site.is_paid && (() => {
+                                                    const now = new Date().getTime();
+                                                    const expireTime = new Date(site.expires_at).getTime();
+                                                    const diff = expireTime - now;
+                                                    if (diff > 0) {
+                                                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                        return ` (${hours}시간 ${minutes}분 남음)`;
+                                                    } else {
+                                                        return ` (만료됨)`;
+                                                    }
+                                                })()}
+                                            </span>
                                         </div>
                                     )}
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        <Link href={`/site?id=${site.id}`} className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
+                                        <Link href={`/site?id=${site.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
                                             <Eye size={16} /> 보기
                                         </Link>
-                                        <Link href={`/build?edit=${site.id}`} className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
+                                        <Link href={`/build?edit=${site.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
                                             <Edit size={16} /> 수정
                                         </Link>
                                     </div>

@@ -86,6 +86,8 @@ function HomeContent() {
         email: ''
     });
 
+    const [isPaid, setIsPaid] = useState(false);
+
     // Load Data
     useEffect(() => {
         if (editId) {
@@ -107,6 +109,8 @@ function HomeContent() {
                 }
 
                 if (siteData) {
+                    setIsPaid(siteData.is_paid || false);
+
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
 
@@ -154,6 +158,11 @@ function HomeContent() {
             loadData();
         }
     }, [editId]);
+
+    // ... Handlers ...
+
+    // (Skipping redundant handler code duplication logic by using specific chunks for the rest)
+
 
     // Handlers
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -277,6 +286,18 @@ function HomeContent() {
                     const { error } = await supabase.from('sites').update(siteData).eq('id', editId);
                     if (error) throw error;
                 } else {
+                    // Check site limit (Max 10)
+                    const { count } = await supabase
+                        .from('sites')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', user?.id);
+
+                    if (count !== null && count >= 10) {
+                        alert('계정당 최대 10개의 사이트만 생성할 수 있습니다.');
+                        setLoading(false);
+                        return;
+                    }
+
                     // New site: add trial fields
                     const newSiteData = {
                         ...siteData,
@@ -330,8 +351,12 @@ function HomeContent() {
                 <div className="bg-blue-600 p-8 text-white">
                     <div className="flex justify-between items-start">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2">🎁 5시간 무료 체험</h1>
-                            <p className="opacity-90">{editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!'}</p>
+                            <h1 className="text-3xl font-bold mb-2">
+                                {isPaid ? '👑 프리미엄 멤버십 (사용 중)' : '🎁 5시간 무료 체험'}
+                            </h1>
+                            <p className="opacity-90">
+                                {isPaid ? '제한 없는 나만의 홈페이지' : (editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!')}
+                            </p>
                         </div>
                         <button
                             type="button"
@@ -347,162 +372,164 @@ function HomeContent() {
                     )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                    {/* 1. Basic Info */}
-                    <section className="space-y-4">
-                        <h2 className="text-xl font-bold border-b pb-2">1. 기본 정보</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Building2 size={16} /> 업체명</label>
-                                <input type="text" name="name" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.name} onChange={handleChange} />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MousePointerClick size={16} /> 한줄 슬로건</label>
-                                <input type="text" name="slogan" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.slogan} onChange={handleChange} />
+                {/* 1. Basic Info */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold border-b pb-2">1. 기본 정보</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Building2 size={16} /> 업체명</label>
+                            <input type="text" name="name" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.name} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MousePointerClick size={16} /> 한줄 슬로건</label>
+                            <input type="text" name="slogan" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.slogan} onChange={handleChange} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><FileText size={16} /> 상세 설명</label>
+                        <textarea name="description" rows={3} className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 bg-white" value={formData.description} onChange={handleChange} />
+                    </div>
+                </section>
+
+                {/* 2. Design & Contact */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold border-b pb-2">2. 디자인 & 연락처</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Palette size={16} /> 테마 색상</label>
+                            <div className="flex items-center gap-3">
+                                <input type="color" name="color" className="h-10 w-20 cursor-pointer" value={formData.color} onChange={handleChange} />
+                                <div className="h-10 w-full rounded" style={{ backgroundColor: formData.color }}></div>
                             </div>
                         </div>
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><FileText size={16} /> 상세 설명</label>
-                            <textarea name="description" rows={3} className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 resize-none" value={formData.description} onChange={handleChange} />
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Sliders size={16} /> 배경 투명도 ({formData.heroOpacity}%)</label>
+                            <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
                         </div>
-                    </section>
-
-                    {/* 2. Design & Contact */}
-                    <section className="space-y-4">
-                        <h2 className="text-xl font-bold border-b pb-2">2. 디자인 & 연락처</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Palette size={16} /> 테마 색상</label>
-                                <div className="flex items-center gap-3">
-                                    <input type="color" name="color" className="h-10 w-20 cursor-pointer" value={formData.color} onChange={handleChange} />
-                                    <div className="h-10 w-full rounded" style={{ backgroundColor: formData.color }}></div>
-                                </div>
+                    </div>
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 메인 배경 이미지 (JPG/PNG)</label>
+                        {heroImageUrl && (
+                            <div className="mb-2 relative w-32 h-20 rounded overflow-hidden border border-gray-200">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={heroImageUrl} alt="Current Hero" className="w-full h-full object-cover" />
                             </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Sliders size={16} /> 배경 투명도 ({formData.heroOpacity}%)</label>
-                                <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
+                        )}
+                        <input type="file" accept="image/jpeg, image/png" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Phone size={16} /> 전화번호 (최대 3개)</label>
+                            <div className="space-y-2">
+                                <input type="tel" name="phone" placeholder="대표 전화번호" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone} onChange={handleChange} />
+                                <input type="tel" name="phone2" placeholder="추가 번호 1 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone2} onChange={handleChange} />
+                                <input type="tel" name="phone3" placeholder="추가 번호 2 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone3} onChange={handleChange} />
                             </div>
                         </div>
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 메인 배경 이미지 (JPG/PNG)</label>
-                            {heroImageUrl && (
-                                <div className="mb-2 relative w-32 h-20 rounded overflow-hidden border border-gray-200">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={heroImageUrl} alt="Current Hero" className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                            <input type="file" accept="image/jpeg, image/png" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Phone size={16} /> 전화번호 (최대 3개)</label>
-                                <div className="space-y-2">
-                                    <input type="tel" name="phone" placeholder="대표 전화번호" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.phone} onChange={handleChange} />
-                                    <input type="tel" name="phone2" placeholder="추가 번호 1 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.phone2} onChange={handleChange} />
-                                    <input type="tel" name="phone3" placeholder="추가 번호 2 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.phone3} onChange={handleChange} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 이메일 (선택)</label>
-                                <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 mb-4" value={socialLinks.email || ''} onChange={handleSocialChange} />
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 이메일 (선택)</label>
+                            <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-gray-900 bg-white" value={socialLinks.email || ''} onChange={handleSocialChange} />
 
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MapPin size={16} /> 주소</label>
-                                <input type="text" name="address" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.address} onChange={handleChange} />
-                            </div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MapPin size={16} /> 주소</label>
+                            <input type="text" name="address" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.address} onChange={handleChange} />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 네이버 지도 링크</label>
-                                <input type="text" name="naverMap" placeholder="https://map.naver.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.naverMap} onChange={handleChange} />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 카카오 맵 링크</label>
-                                <input type="text" name="kakaoMap" placeholder="https://map.kakao.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={formData.kakaoMap} onChange={handleChange} />
-                            </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 네이버 지도 링크</label>
+                            <input type="text" name="naverMap" placeholder="https://map.naver.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.naverMap} onChange={handleChange} />
                         </div>
-                    </section>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 카카오 맵 링크</label>
+                            <input type="text" name="kakaoMap" placeholder="https://map.kakao.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.kakaoMap} onChange={handleChange} />
+                        </div>
+                    </div>
+                </section>
 
-                    {/* 3. Social Media */}
-                    <section className="space-y-4">
-                        <h2 className="text-xl font-bold border-b pb-2">3. 소셜 미디어 (선택)</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Instagram size={16} /> 인스타그램</label>
-                                <input type="text" name="instagram" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={socialLinks.instagram} onChange={handleSocialChange} />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Facebook size={16} /> 페이스북</label>
-                                <input type="text" name="facebook" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={socialLinks.facebook} onChange={handleSocialChange} />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 블로그/카페</label>
-                                <input type="text" name="blog" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={socialLinks.blog} onChange={handleSocialChange} />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Youtube size={16} /> 유튜브</label>
-                                <input type="text" name="youtube" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" value={socialLinks.youtube} onChange={handleSocialChange} />
-                            </div>
+                {/* 3. Social Media */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold border-b pb-2">3. 소셜 미디어 (선택)</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Instagram size={16} /> 인스타그램</label>
+                            <input type="text" name="instagram" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.instagram} onChange={handleSocialChange} />
                         </div>
-                    </section>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Facebook size={16} /> 페이스북</label>
+                            <input type="text" name="facebook" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.facebook} onChange={handleSocialChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 블로그/카페</label>
+                            <input type="text" name="blog" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.blog} onChange={handleSocialChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Youtube size={16} /> 유튜브</label>
+                            <input type="text" name="youtube" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.youtube} onChange={handleSocialChange} />
+                        </div>
+                    </div>
+                </section>
 
-                    {/* 4. Reviews */}
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between border-b pb-2">
-                            <h2 className="text-xl font-bold">4. 고객 후기</h2>
-                            <button type="button" onClick={addReview} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
-                        </div>
-                        <div className="space-y-4">
-                            {reviews.length === 0 && <p className="text-sm text-gray-400 text-center py-4">등록된 후기가 없습니다.</p>}
-                            {reviews.map((review) => (
-                                <div key={review.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
-                                    <button type="button" onClick={() => removeReview(review.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                                    <div className="space-y-3">
-                                        <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
-                                        <textarea placeholder="후기 내용" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 resize-none h-20" value={review.content} onChange={(e) => updateReview(review.id, 'content', e.target.value)} />
-                                        <div className="flex items-center gap-2">
-                                            <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                                            <input type="number" min="1" max="5" className="w-16 px-2 py-1 border rounded" value={review.rating} onChange={(e) => updateReview(review.id, 'rating', Number(e.target.value))} />
-                                        </div>
+                {/* 4. Reviews */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between border-b pb-2">
+                        <h2 className="text-xl font-bold">4. 고객 후기</h2>
+                        <button type="button" onClick={addReview} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
+                    </div>
+                    <div className="space-y-4">
+                        {reviews.length === 0 && <p className="text-sm text-gray-400 text-center py-4">등록된 후기가 없습니다.</p>}
+                        {reviews.map((review) => (
+                            <div key={review.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
+                                <button type="button" onClick={() => removeReview(review.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                                <div className="space-y-3">
+                                    <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
+                                    <textarea placeholder="후기 내용" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 resize-none h-20 text-gray-900 bg-white" value={review.content} onChange={(e) => updateReview(review.id, 'content', e.target.value)} />
+                                    <div className="flex items-center gap-2">
+                                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                                        <input type="number" min="1" max="5" className="w-16 px-2 py-1 border rounded text-gray-900 bg-white" value={review.rating} onChange={(e) => updateReview(review.id, 'rating', Number(e.target.value))} />
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </section>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
-                    {/* 5. Portfolio */}
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between border-b pb-2">
-                            <h2 className="text-xl font-bold">5. 메뉴 / 포트폴리오</h2>
-                            <button type="button" onClick={addPortfolioItem} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
-                        </div>
-                        {portfolio.length === 0 && <p className="text-center text-gray-400 py-4 text-sm">항목을 추가해주세요.</p>}
-                        <div className="space-y-4">
-                            {portfolio.map((item) => (
-                                <div key={item.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
-                                    <button type="button" onClick={() => removePortfolioItem(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                                    <div className="space-y-3">
-                                        <input type="text" placeholder="제목" className="w-full px-3 py-2 rounded border outline-none" value={item.title} onChange={(e) => updatePortfolioItem(item.id, 'title', e.target.value)} />
-                                        <textarea placeholder="설명" className="w-full px-3 py-2 rounded border outline-none resize-none h-20" value={item.desc} onChange={(e) => updatePortfolioItem(item.id, 'desc', e.target.value)} />
-                                        <div className="flex gap-4 items-center">
-                                            {item.imageUrl && <img src={item.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />}
-                                            <input type="file" accept="image/jpeg, image/png" className="text-xs text-gray-500" onChange={(e) => {
-                                                if (e.target.files?.[0] && validateImage(e.target.files[0])) {
-                                                    updatePortfolioItem(item.id, 'file', e.target.files[0]);
-                                                }
-                                            }} />
-                                        </div>
+                {/* 5. Portfolio */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between border-b pb-2">
+                        <h2 className="text-xl font-bold">5. 메뉴 / 포트폴리오</h2>
+                        <button type="button" onClick={addPortfolioItem} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
+                    </div>
+                    {portfolio.length === 0 && <p className="text-center text-gray-400 py-4 text-sm">항목을 추가해주세요.</p>}
+                    <div className="space-y-4">
+                        {portfolio.map((item) => (
+                            <div key={item.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
+                                <button type="button" onClick={() => removePortfolioItem(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                                <div className="space-y-3">
+                                    <input type="text" placeholder="제목" className="w-full px-3 py-2 rounded border outline-none text-gray-900 bg-white" value={item.title} onChange={(e) => updatePortfolioItem(item.id, 'title', e.target.value)} />
+                                    <textarea placeholder="설명" className="w-full px-3 py-2 rounded border outline-none resize-none h-20 text-gray-900 bg-white" value={item.desc} onChange={(e) => updatePortfolioItem(item.id, 'desc', e.target.value)} />
+                                    <div className="flex gap-4 items-center">
+                                        {item.imageUrl && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={item.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
+                                        )}
+                                        <input type="file" accept="image/jpeg, image/png" className="text-xs text-gray-500" onChange={(e) => {
+                                            if (e.target.files?.[0] && validateImage(e.target.files[0])) {
+                                                updatePortfolioItem(item.id, 'file', e.target.files[0]);
+                                            }
+                                        }} />
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </section>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
-                    <button type="submit" disabled={loading} className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg mt-6 ${loading ? 'opacity-70' : ''}`}>
-                        {loading ? '처리 중...' : (editId ? '수정 완료하기 ✨' : '홈페이지 생성하기 ✨')}
-                    </button>
-                </form>
-            </div>
-        </main>
+                <button type="submit" disabled={loading} className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg mt-6 ${loading ? 'opacity-70' : ''}`}>
+                    {loading ? '처리 중...' : (editId ? '수정 완료하기 ✨' : '홈페이지 생성하기 ✨')}
+                </button>
+            </form>
+        </div>
+        </main >
     );
 }
 
