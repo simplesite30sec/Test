@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        const siteName = (addon.sites as any)?.name || 'Unknown Site';
+        const siteName = (addon.sites as { name?: string })?.name || 'Unknown Site';
         const notificationEmail = addon.config.notificationEmail;
 
         // Send email via Resend
