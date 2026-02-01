@@ -20,6 +20,9 @@ type ReviewItem = {
     name: string;
     content: string;
     rating: number;
+    avatar_url?: string;
+    avatar_file?: File;
+    date?: string;
 };
 
 function HomeContent() {
@@ -76,6 +79,10 @@ function HomeContent() {
     });
     const [heroImage, setHeroImage] = useState<File | null>(null);
     const [heroImageUrl, setHeroImageUrl] = useState<string>('');
+
+    // Logo State
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoUrl, setLogoUrl] = useState<string>('');
 
     const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
     const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -168,6 +175,7 @@ function HomeContent() {
                         googleMap: siteData.google_map || '',
                     });
                     setHeroImageUrl(siteData.hero_image_url || '');
+                    setLogoUrl(siteData.logo_url || '');
 
                     if (siteData.social_links) {
                         setSocialLinks({
@@ -251,9 +259,9 @@ function HomeContent() {
     };
 
     // Review Handlers
-    const addReview = () => setReviews([...reviews, { id: crypto.randomUUID(), name: '', content: '', rating: 5 }]);
+    const addReview = () => setReviews([...reviews, { id: crypto.randomUUID(), name: '', content: '', rating: 5, date: '' }]);
     const removeReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
-    const updateReview = (id: string, field: keyof ReviewItem, value: string | number) => {
+    const updateReview = (id: string, field: keyof ReviewItem, value: string | number | File) => {
         setReviews(reviews.map(r => r.id === id ? { ...r, [field]: value } : r));
     };
 
@@ -317,8 +325,37 @@ function HomeContent() {
                 return { title: item.title, desc: item.desc, image_url: itemImageUrl }
             }));
 
+            // Process review avatars
+            const reviewsWithAvatars = await Promise.all(reviews.map(async (review) => {
+                let avatarUrl = review.avatar_url || '';
+                if (review.avatar_file) {
+                    try {
+                        avatarUrl = await uploadFile(review.avatar_file);
+                    } catch (error) {
+                        console.error("Review avatar upload failed:", error);
+                    }
+                }
+                return {
+                    name: review.name,
+                    content: review.content,
+                    rating: review.rating,
+                    avatar_url: avatarUrl,
+                    date: review.date || ''
+                }
+            }));
+
             // Combine phones
             const phones = [formData.phone, formData.phone2, formData.phone3].filter(p => p.trim() !== '').join('|');
+
+            // Process logo upload
+            let finalLogoUrl = logoUrl || '';
+            if (logoFile) {
+                try {
+                    finalLogoUrl = await uploadFile(logoFile);
+                } catch (error) {
+                    console.error("Logo upload failed:", error);
+                }
+            }
 
             // Calculate expiration time (5 hours from now)
             const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
@@ -332,10 +369,11 @@ function HomeContent() {
                 color: formData.color,
                 hero_opacity: formData.heroOpacity,
                 hero_image_url: finalHeroImageUrl,
+                logo_url: finalLogoUrl,
                 map_links: { naver: formData.naverMap, kakao: formData.kakaoMap },
                 google_map: formData.googleMap,
                 social_links: socialLinks, // includes email
-                reviews: reviews,
+                reviews: reviewsWithAvatars,
                 portfolio: portfolioWithImages,
                 section_order: sectionOrder,
                 section_titles: sectionTitles,
@@ -493,6 +531,28 @@ function HomeContent() {
                         )}
                         <input type="file" accept="image/jpeg, image/png" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
                     </div>
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 로고 이미지 (JPG/PNG) - 헤더 및 파비콘</label>
+                        <div className="flex items-center gap-4">
+                            {(logoUrl || logoFile) && (
+                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={logoFile ? URL.createObjectURL(logoFile) : logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/jpeg, image/png, image/svg+xml"
+                                className="block flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-green-50 file:text-green-700"
+                                onChange={(e) => {
+                                    if (e.target.files?.[0] && validateImage(e.target.files[0])) {
+                                        setLogoFile(e.target.files[0]);
+                                    }
+                                }}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">헤더에 로고가 표시되고 브라우저 탭에 파비콘으로 사용됩니다.</p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Phone size={16} /> 전화번호 (최대 3개)</label>
@@ -561,7 +621,40 @@ function HomeContent() {
                             <div key={review.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
                                 <button type="button" onClick={() => removeReview(review.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
                                 <div className="space-y-3">
-                                    <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
+                                    <div className="flex gap-4 items-start">
+                                        {/* Avatar Upload (Optional) */}
+                                        <div className="flex-shrink-0 text-center">
+                                            <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-300 mb-1">
+                                                {review.avatar_url || review.avatar_file ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={review.avatar_file ? URL.createObjectURL(review.avatar_file) : review.avatar_url}
+                                                        alt=""
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">👤</div>
+                                                )}
+                                            </div>
+                                            <label className="text-xs text-blue-600 cursor-pointer hover:underline">
+                                                사진 변경
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) {
+                                                            updateReview(review.id, 'avatar_file', e.target.files[0]);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
+                                            <input type="date" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={review.date || ''} onChange={(e) => updateReview(review.id, 'date', e.target.value)} />
+                                        </div>
+                                    </div>
                                     <textarea placeholder="후기 내용" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 resize-none h-20 text-gray-900 bg-white" value={review.content} onChange={(e) => updateReview(review.id, 'content', e.target.value)} />
                                     <div className="flex items-center gap-2">
                                         <Star size={14} className="text-yellow-500 fill-yellow-500" />

@@ -16,6 +16,7 @@ type SiteData = {
     color: string;
     hero_opacity: number;
     hero_image_url: string;
+    logo_url?: string;
     map_links: { naver?: string; kakao?: string };
     google_map?: string;
     social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; youtube?: string; email?: string };
@@ -71,6 +72,18 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             setIsEditMode(true);
         }
     }, []);
+
+    // Set favicon from logo_url
+    useEffect(() => {
+        if (data?.logo_url) {
+            const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement || document.createElement('link');
+            link.rel = 'icon';
+            link.href = data.logo_url;
+            if (!document.querySelector("link[rel~='icon']")) {
+                document.head.appendChild(link);
+            }
+        }
+    }, [data?.logo_url]);
 
     // Check ownership and fetch addons
     useEffect(() => {
@@ -602,7 +615,13 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {/* Header */}
             <header className={`fixed w-full ${!isPaid && timeLeft ? 'top-10' : 'top-0'} bg-white/80 backdrop-blur-md z-50 border-b border-gray-100`}>
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <h1 className="text-xl font-bold tracking-tight">{name}</h1>
+                    <div className="flex items-center gap-3">
+                        {data?.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={data.logo_url} alt={name} className="h-10 w-auto object-contain" />
+                        ) : null}
+                        <h1 className="text-xl font-bold tracking-tight">{name}</h1>
+                    </div>
                     <nav className="hidden md:flex gap-8 text-sm font-medium text-gray-500">
                         <a href="#" className="hover:text-black transition">{section_titles?.about || '소개'}</a>
                         {portfolio.length > 0 && <a href="#menu" className="hover:text-black transition">{section_titles?.menu || '메뉴/상품'}</a>}
@@ -681,7 +700,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                         <div className="max-w-5xl mx-auto">
                                             <h3 className="text-3xl font-bold mb-12 text-center">{titles.reviews}</h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {reviews.map((review: { id: string; name: string; content: string; rating: number }, idx: number) => (
+                                                {reviews.map((review: { id: string; name: string; content: string; rating: number; avatar_url?: string; date?: string }, idx: number) => (
                                                     <div key={idx} className="p-8 bg-gray-50 rounded-2xl relative border border-gray-100">
                                                         <Quote className="text-blue-200 mb-4 absolute top-6 right-6" size={40} />
                                                         <div className="flex gap-1 mb-4">
@@ -690,7 +709,18 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                                             ))}
                                                         </div>
                                                         <p className="text-gray-700 mb-6 leading-relaxed">&quot;{review.content}&quot;</p>
-                                                        <p className="font-bold text-gray-900 border-t border-gray-200 pt-4 text-sm">{review.name}</p>
+                                                        <div className="border-t border-gray-200 pt-4 flex items-center gap-3">
+                                                            {review.avatar_url ? (
+                                                                // eslint-disable-next-line @next/next/no-img-element
+                                                                <img src={review.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-gray-200" />
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-lg">👤</div>
+                                                            )}
+                                                            <div>
+                                                                <p className="font-bold text-gray-900 text-sm">{review.name}</p>
+                                                                {review.date && <p className="text-xs text-gray-500">{review.date}</p>}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
