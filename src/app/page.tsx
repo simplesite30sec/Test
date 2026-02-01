@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Check, Star, Zap, Shield, Layout, Smartphone } from 'lucide-react';
 
+export const dynamic = 'force-static';
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100">
