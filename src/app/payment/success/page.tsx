@@ -49,6 +49,20 @@ function SuccessContent() {
 
                 if (error) throw error;
 
+                // 3. Record Coupon Usage (if exists in localStorage)
+                const pendingCoupon = localStorage.getItem('pending_coupon');
+                if (pendingCoupon) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        await supabase.from('coupon_usages').insert({
+                            user_id: user.id,
+                            coupon_code: pendingCoupon,
+                            site_id: id
+                        });
+                    }
+                    localStorage.removeItem('pending_coupon');
+                }
+
                 setStatus('결제가 성공적으로 완료되었습니다! 이제 홈페이지가 게시됩니다.');
             } catch (error) {
                 console.error('Payment verification failed:', error);

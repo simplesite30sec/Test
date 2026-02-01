@@ -28,7 +28,7 @@ export default function UserStatusBadge() {
                     <p className="text-sm font-bold text-gray-900">{user.email?.split('@')[0]}님</p>
                 </div>
                 <Link
-                    href="/build"
+                    href="/dashboard"
                     className="flex items-center gap-2 bg-gray-900 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition text-sm font-bold shadow-lg"
                 >
                     <span>내 사이트 관리</span>
