@@ -16,13 +16,18 @@ type Site = {
     is_paid: boolean;
     hero_image_url: string;
     created_at: string;
+    user_id: string;
 };
 
 export default function DashboardPage() {
     const router = useRouter();
+    // ... imports
     const [user, setUser] = useState<User | null>(null);
     const [sites, setSites] = useState<Site[]>([]);
+    const [allSites, setAllSites] = useState<Site[]>([]); // For Admin
     const [loading, setLoading] = useState(true);
+
+    const isAdmin = user?.email === 'inmyeong320@naver.com';
 
     useEffect(() => {
         const checkAuthAndLoadSites = async () => {
@@ -33,6 +38,7 @@ export default function DashboardPage() {
             }
             setUser(user);
 
+            // Fetch User's Sites
             const { data } = await supabase
                 .from('sites')
                 .select('*')
@@ -40,6 +46,16 @@ export default function DashboardPage() {
                 .order('created_at', { ascending: false });
 
             if (data) setSites(data as Site[]);
+
+            // Fetch All Sites for Admin
+            if (user.email === 'inmyeong320@naver.com') {
+                const { data: allData } = await supabase
+                    .from('sites')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (allData) setAllSites(allData as Site[]);
+            }
+
             setLoading(false);
         };
         checkAuthAndLoadSites();
@@ -57,6 +73,9 @@ export default function DashboardPage() {
 
         if (!error) {
             setSites(sites.map(s => s.id === id ? { ...s, status: newStatus } : s));
+            if (isAdmin) {
+                setAllSites(allSites.map(s => s.id === id ? { ...s, status: newStatus } : s));
+            }
         } else {
             alert("상태 변경 실패");
         }
@@ -68,6 +87,9 @@ export default function DashboardPage() {
         const { error } = await supabase.from('sites').delete().eq('id', id);
         if (!error) {
             setSites(sites.filter(s => s.id !== id));
+            if (isAdmin) {
+                setAllSites(allSites.filter(s => s.id !== id));
+            }
         } else {
             alert("삭제 실패");
         }
@@ -83,6 +105,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                         <Link href="/" className="text-xl font-bold tracking-tight">SimpleSite</Link>
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Dashboard</span>
+                        {isAdmin && <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">MASTER</span>}
                     </div>
                     <div className="flex items-center gap-4">
                         <span className="text-sm text-gray-500 hidden md:inline">{user?.email}</span>
@@ -94,9 +117,68 @@ export default function DashboardPage() {
             </header>
 
             <main className="max-w-7xl mx-auto px-6 py-12">
+
+                {/* Admin Dashboard */}
+                {isAdmin && (
+                    <div className="mb-16 bg-white rounded-3xl border border-purple-100 shadow-sm overflow-hidden">
+                        <div className="bg-purple-50 p-6 border-b border-purple-100">
+                            <h2 className="text-2xl font-bold text-purple-900 flex items-center gap-2">
+                                👑 마스터 대시보드 (전체 현황)
+                            </h2>
+                            <p className="text-purple-700 opacity-80 mt-1">
+                                총 {allSites.length}개의 사이트가 생성되었습니다. (유료: {allSites.filter(s => s.is_paid).length}개)
+                            </p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 border-b">
+                                    <tr>
+                                        <th className="px-6 py-3">사이트명 / 설명</th>
+                                        <th className="px-6 py-3">소유자 ID</th>
+                                        <th className="px-6 py-3">상태</th>
+                                        <th className="px-6 py-3">생성일</th>
+                                        <th className="px-6 py-3">결제 여부</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {allSites.map(site => (
+                                        <tr key={site.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-gray-900">{site.name || '(제목 없음)'}</div>
+                                                <div className="text-gray-400 text-xs truncate max-w-[200px]">{site.description}</div>
+                                            </td>
+                                            <td className="px-6 py-4 font-mono text-xs text-gray-500">{site.user_id}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${site.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                    site.status === 'paused' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                    {site.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-500">{new Date(site.created_at).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4">
+                                                {site.is_paid ? (
+                                                    <span className="text-blue-600 font-bold flex items-center gap-1"><Clock size={12} /> 유료</span>
+                                                ) : (
+                                                    <span className="text-gray-400">무료</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">내 사이트 관리</h1>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold">내 사이트 관리</h1>
+                            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-bold">
+                                {sites.length} / 10
+                            </span>
+                        </div>
                         <p className="text-gray-500">제작한 홈페이지를 관리하고 상태를 확인하세요.</p>
                     </div>
                     <Link href="/build" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5">

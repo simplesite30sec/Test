@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut } from 'lucide-react';
+import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -358,6 +359,13 @@ function HomeContent() {
                                 {isPaid ? '제한 없는 나만의 홈페이지' : (editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!')}
                             </p>
                         </div>
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition mr-2"
+                        >
+                            <LayoutDashboard size={14} />
+                            대시보드
+                        </Link>
                         <button
                             type="button"
                             onClick={handleLogout}

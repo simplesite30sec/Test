@@ -227,13 +227,19 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             });
 
             // If response is returned (e.g. for popup/iframe modes that don't redirect), check code
-            if (response && response.code !== undefined) {
+            if (response) {
                 if (response.code != null) {
+                    // Payment Failed
                     console.error("Payment error:", response);
                     alert(`결제 처리 중 오류가 발생했습니다: ${response.message || "알 수 없는 오류"}`);
+                } else {
+                    // Payment Success (Manual Redirect for Desktop)
+                    // If response.paymentId exists or code is null, it means success.
+                    // For safety, pass paymentId to success page.
+                    const pid = response.paymentId || paymentId; // Fallback to generated ID
+                    window.location.href = `/payment/success?id=${id}&paymentId=${pid}`;
                 }
             }
-
         } catch (error: unknown) {
             console.error("Payment request failed:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
