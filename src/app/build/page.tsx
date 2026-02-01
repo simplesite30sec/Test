@@ -70,6 +70,7 @@ function HomeContent() {
         heroOpacity: 50,
         naverMap: '',
         kakaoMap: '',
+        googleMap: '',
         phone2: '',
         phone3: '',
     });
@@ -86,6 +87,28 @@ function HomeContent() {
         youtube: '',
         email: ''
     });
+
+    // Section Titles State
+    const [sectionTitles, setSectionTitles] = useState({
+        about: 'About Us',
+        menu: 'Menu / Portfolio',
+        reviews: 'Customer Reviews',
+        contact: 'Contact & Location',
+        inquiry: '문의하기',
+        qna: 'Q&A'
+    });
+
+    // Font Selection State
+    const [fontFamily, setFontFamily] = useState('Inter');
+    const FONT_OPTIONS = [
+        { value: 'Inter', label: 'Inter (기본)' },
+        { value: 'Noto Sans KR', label: 'Noto Sans KR (한글)' },
+        { value: 'Nanum Gothic', label: '나눔고딕' },
+        { value: 'Nanum Myeongjo', label: '나눔명조' },
+        { value: 'Roboto', label: 'Roboto' },
+        { value: 'Open Sans', label: 'Open Sans' },
+        { value: 'Montserrat', label: 'Montserrat' },
+    ];
 
     // Section Order State
     const [sectionOrder, setSectionOrder] = useState<string[]>(['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact']);
@@ -124,6 +147,8 @@ function HomeContent() {
                 if (siteData) {
                     setIsPaid(siteData.is_paid || false);
                     if (siteData.section_order) setSectionOrder(siteData.section_order as string[]);
+                    if (siteData.section_titles) setSectionTitles(siteData.section_titles as typeof sectionTitles);
+                    if (siteData.font_family) setFontFamily(siteData.font_family);
 
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
@@ -140,6 +165,7 @@ function HomeContent() {
                         heroOpacity: siteData.hero_opacity ?? 50,
                         naverMap: siteData.map_links?.naver || '',
                         kakaoMap: siteData.map_links?.kakao || '',
+                        googleMap: siteData.google_map || '',
                     });
                     setHeroImageUrl(siteData.hero_image_url || '');
 
@@ -289,10 +315,13 @@ function HomeContent() {
                 hero_opacity: formData.heroOpacity,
                 hero_image_url: finalHeroImageUrl,
                 map_links: { naver: formData.naverMap, kakao: formData.kakaoMap },
+                google_map: formData.googleMap,
                 social_links: socialLinks, // includes email
                 reviews: reviews,
                 portfolio: portfolioWithImages,
-                section_order: sectionOrder
+                section_order: sectionOrder,
+                section_titles: sectionTitles,
+                font_family: fontFamily
             };
 
             try {
@@ -456,7 +485,7 @@ function HomeContent() {
                             <input type="text" name="address" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.address} onChange={handleChange} />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 네이버 지도 링크</label>
                             <input type="text" name="naverMap" placeholder="https://map.naver.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.naverMap} onChange={handleChange} />
@@ -464,6 +493,10 @@ function HomeContent() {
                         <div>
                             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 카카오 맵 링크</label>
                             <input type="text" name="kakaoMap" placeholder="https://map.kakao.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.kakaoMap} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 구글 지도 링크</label>
+                            <input type="text" name="googleMap" placeholder="https://maps.app.goo.gl/..." className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.googleMap} onChange={handleChange} />
                         </div>
                     </div>
                 </section>
@@ -596,6 +629,89 @@ function HomeContent() {
                     <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
                         💡 &apos;Q&A&apos;나 &apos;문의하기&apos;는 애드온 스토어에서 활성화해야 실제 화면에 나타납니다.
                     </div>
+                </section>
+
+                {/* 7. Section Titles */}
+                <section className="bg-gray-50 p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> 7. 섹션 제목 설정</h3>
+                    <p className="text-sm text-gray-600 mb-6">각 섹션의 제목을 원하는 언어나 문구로 변경할 수 있습니다.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">소개 섹션 (About)</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.about}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, about: e.target.value })}
+                                placeholder="About Us"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">메뉴/포트폴리오 섹션</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.menu}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, menu: e.target.value })}
+                                placeholder="Menu / Portfolio"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">고객 후기 섹션</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.reviews}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, reviews: e.target.value })}
+                                placeholder="Customer Reviews"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">연락처 섹션</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.contact}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, contact: e.target.value })}
+                                placeholder="Contact & Location"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">문의하기 섹션 (애드온)</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.inquiry}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, inquiry: e.target.value })}
+                                placeholder="문의하기"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Q&A 섹션 (애드온)</label>
+                            <input
+                                type="text"
+                                value={sectionTitles.qna}
+                                onChange={(e) => setSectionTitles({ ...sectionTitles, qna: e.target.value })}
+                                placeholder="Q&A"
+                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* 8. Font Selection */}
+                <section className="bg-gray-50 p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Palette size={20} /> 8. 글씨 폰트</h3>
+                    <p className="text-sm text-gray-600 mb-4">사이트 전체에 적용될 글씨체를 선택하세요.</p>
+                    <select
+                        value={fontFamily}
+                        onChange={(e) => setFontFamily(e.target.value)}
+                        className="w-full md:w-1/2 px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    >
+                        {FONT_OPTIONS.map(font => (
+                            <option key={font.value} value={font.value}>{font.label}</option>
+                        ))}
+                    </select>
                 </section>
 
                 <button type="submit" disabled={loading} className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg mt-6 ${loading ? 'opacity-70' : ''}`}>

@@ -17,6 +17,7 @@ type SiteData = {
     hero_opacity: number;
     hero_image_url: string;
     map_links: { naver?: string; kakao?: string };
+    google_map?: string;
     social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; youtube?: string; email?: string };
     reviews?: { id: string; name: string; content: string; rating: number }[];
     portfolio: { title: string; desc: string; image_url: string }[];
@@ -24,6 +25,15 @@ type SiteData = {
     is_paid?: boolean;
     status?: 'draft' | 'active' | 'paused';
     section_order?: string[];
+    section_titles?: {
+        about?: string;
+        menu?: string;
+        reviews?: string;
+        contact?: string;
+        inquiry?: string;
+        qna?: string;
+    };
+    font_family?: string;
 };
 
 type SiteViewerProps = {
@@ -450,8 +460,30 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         );
     }
 
+    // New destructuring and variables
+    const { hero_image_url: newHeroImageUrl, slogan: newSlogan, description: newDescription, name: newName, phone: newPhone, address: newAddress, portfolio: newPortfolio, reviews: newReviews, map_links: newMapLinks, social_links: newSocialLinks, section_order, section_titles, google_map, font_family } = data;
+    const overlayOpacityNew = (data?.hero_opacity ?? 50) / 100;
+
+    // Default section titles
+    const titles = {
+        about: section_titles?.about || 'About Us',
+        menu: section_titles?.menu || 'Menu / Portfolio',
+        reviews: section_titles?.reviews || 'Customer Reviews',
+        contact: section_titles?.contact || 'Contact & Location',
+        inquiry: section_titles?.inquiry || '문의하기',
+        qna: section_titles?.qna || 'Q&A'
+    };
+
+    // Google Fonts import
+    const fontLink = font_family && font_family !== 'Inter'
+        ? `https://fonts.googleapis.com/css2?family=${font_family.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`
+        : null;
+
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200">
+        <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200" style={{ fontFamily: font_family || 'Inter, sans-serif' }}>
+            {fontLink && (
+                <link rel="stylesheet" href={fontLink} />
+            )}
             {/* Payment Modal */}
             {showPaymentModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -597,7 +629,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                 return description ? (
                                     <section key="about" className="py-24 px-6">
                                         <div className="max-w-3xl mx-auto">
-                                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 block">About Us</span>
+                                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 block">{titles.about}</span>
                                             <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap">{description}</p>
                                         </div>
                                     </section>
@@ -606,7 +638,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                 return portfolio && portfolio.length > 0 ? (
                                     <section key="menu" id="menu" className="py-24 bg-gray-50 overflow-hidden">
                                         <div className="max-w-6xl mx-auto px-6">
-                                            <h3 className="text-3xl font-bold mb-12 text-center">Menu / Portfolio</h3>
+                                            <h3 className="text-3xl font-bold mb-12 text-center">{titles.menu}</h3>
                                             <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
                                                 {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
                                                     <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
@@ -632,7 +664,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                 return reviews && reviews.length > 0 ? (
                                     <section key="reviews" id="reviews" className="py-24 px-6 bg-white">
                                         <div className="max-w-5xl mx-auto">
-                                            <h3 className="text-3xl font-bold mb-12 text-center">Customer Reviews</h3>
+                                            <h3 className="text-3xl font-bold mb-12 text-center">{titles.reviews}</h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {reviews.map((review: { id: string; name: string; content: string; rating: number }, idx: number) => (
                                                     <div key={idx} className="p-8 bg-gray-50 rounded-2xl relative border border-gray-100">
@@ -658,7 +690,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                 return (
                                     <section key="contact" id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">
                                         <div className="max-w-4xl mx-auto text-center">
-                                            <h3 className="text-3xl font-bold mb-12">Contact & Location</h3>
+                                            <h3 className="text-3xl font-bold mb-12">{titles.contact}</h3>
                                             {(social_links.instagram || social_links.facebook || social_links.blog || social_links.youtube || social_links.email) && (
                                                 <div className="flex justify-center gap-6 mb-12">
                                                     {social_links.instagram && <a href={social_links.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-white rounded-full shadow hover:text-pink-600 transition"><Instagram /></a>}
