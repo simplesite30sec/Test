@@ -178,6 +178,18 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                     });
                 }
 
+                // 3. Record Payment (for Admin Dashboard)
+                if (user) {
+                    await supabase.from('payments').insert({
+                        user_id: user.id,
+                        site_id: id,
+                        amount: 0,
+                        method: finalPrice === 0 ? 'coupon' : 'free_pass',
+                        coupon_code: couponCode || null,
+                        status: 'success'
+                    });
+                }
+
                 alert("무료 이용권이 적용되었습니다!");
                 window.location.reload();
                 return;

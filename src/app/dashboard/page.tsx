@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle } from 'lucide-react';
+import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 
 type Site = {
     id: string;
@@ -19,13 +19,27 @@ type Site = {
     user_id: string;
 };
 
+type Payment = {
+    id: string;
+    user_id: string;
+    site_id: string;
+    amount: number;
+    method: string;
+    coupon_code: string;
+    payment_id: string;
+    status: string;
+    created_at: string;
+};
+
 export default function DashboardPage() {
     const router = useRouter();
-    // ... imports
     const [user, setUser] = useState<User | null>(null);
     const [sites, setSites] = useState<Site[]>([]);
     const [allSites, setAllSites] = useState<Site[]>([]); // For Admin
+    const [payments, setPayments] = useState<Payment[]>([]); // For Admin
     const [loading, setLoading] = useState(true);
+    const [filterRange, setFilterRange] = useState<'day' | 'week' | 'month' | 'all'>('all');
+    const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
 
     const isAdmin = user?.email === 'inmyeong320@naver.com';
 
@@ -54,12 +68,68 @@ export default function DashboardPage() {
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (allData) setAllSites(allData as Site[]);
+
+                const { data: payData } = await supabase
+                    .from('payments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (payData) setPayments(payData as Payment[]);
             }
 
             setLoading(false);
         };
         checkAuthAndLoadSites();
     }, [router]);
+
+    // Helpers for Admin Dashboard
+    const getFilteredPayments = () => {
+        if (filterRange === 'all') return payments;
+        const now = new Date();
+        const diffDays = filterRange === 'day' ? 1 : filterRange === 'week' ? 7 : 30;
+        const cutoff = new Date(now.getTime() - diffDays * 24 * 60 * 60 * 1000);
+        return payments.filter(p => new Date(p.created_at) >= cutoff);
+    };
+
+    const totalRevenue = getFilteredPayments().reduce((sum, p) => sum + p.amount, 0);
+
+    const groupSitesByUser = () => {
+        const groups: Record<string, Site[]> = {};
+        allSites.forEach(site => {
+            if (!groups[site.user_id]) groups[site.user_id] = [];
+            groups[site.user_id].push(site);
+        });
+        return groups;
+    };
+
+    const toggleUserExpand = (userId: string) => {
+        setExpandedUsers(prev =>
+            prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+        );
+    };
+
+    const formatTimeRemaining = (expiresAt: string, isPaid: boolean) => {
+        const now = new Date().getTime();
+        const expireTime = new Date(expiresAt).getTime();
+        const diff = expireTime - now;
+
+        if (diff <= 0) return "만료됨";
+
+        if (isPaid) {
+            // Paid: Months and Days
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const months = Math.floor(days / 30);
+            const remainingDays = days % 30;
+            if (months > 0) return `${months}개월 ${remainingDays}일 남음`;
+            return `${remainingDays}일 남음`;
+        } else {
+            // Trial: Hours and Minutes
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            return `${hours}시간 ${minutes}분 남음`;
+        }
+    };
+
+    const getShortUserId = (userId: string) => userId.split('-')[0].toUpperCase();
 
     const toggleStatus = async (id: string, currentStatus: string) => {
         const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
@@ -120,53 +190,165 @@ export default function DashboardPage() {
 
                 {/* Admin Dashboard */}
                 {isAdmin && (
-                    <div className="mb-16 bg-white rounded-3xl border border-purple-100 shadow-sm overflow-hidden">
-                        <div className="bg-purple-50 p-6 border-b border-purple-100">
-                            <h2 className="text-2xl font-bold text-purple-900 flex items-center gap-2">
-                                👑 마스터 대시보드 (전체 현황)
-                            </h2>
-                            <p className="text-purple-700 opacity-80 mt-1">
-                                총 {allSites.length}개의 사이트가 생성되었습니다. (유료: {allSites.filter(s => s.is_paid).length}개)
-                            </p>
+                    <div className="space-y-10 mb-20 animate-fadeIn">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><Globe size={20} /></div>
+                                    <span className="text-gray-500 font-medium">총 사이트</span>
+                                </div>
+                                <div className="text-3xl font-bold">{allSites.length}</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-blue-100 p-3 rounded-2xl text-blue-600"><Users size={20} /></div>
+                                    <span className="text-gray-500 font-medium">총 사용자</span>
+                                </div>
+                                <div className="text-3xl font-bold">{Object.keys(groupSitesByUser()).length}</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-green-100 p-3 rounded-2xl text-green-600"><DollarSign size={20} /></div>
+                                    <span className="text-gray-500 font-medium">총 매출 ({filterRange})</span>
+                                </div>
+                                <div className="text-3xl font-bold">{totalRevenue.toLocaleString()}원</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-orange-100 p-3 rounded-2xl text-orange-600"><TrendingUp size={20} /></div>
+                                    <span className="text-gray-500 font-medium">유료 비율</span>
+                                </div>
+                                <div className="text-3xl font-bold">
+                                    {allSites.length > 0 ? Math.round((allSites.filter(s => s.is_paid).length / allSites.length) * 100) : 0}%
+                                </div>
+                            </div>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-500 border-b">
-                                    <tr>
-                                        <th className="px-6 py-3">사이트명 / 설명</th>
-                                        <th className="px-6 py-3">소유자 ID</th>
-                                        <th className="px-6 py-3">상태</th>
-                                        <th className="px-6 py-3">생성일</th>
-                                        <th className="px-6 py-3">결제 여부</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {allSites.map(site => (
-                                        <tr key={site.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900">{site.name || '(제목 없음)'}</div>
-                                                <div className="text-gray-400 text-xs truncate max-w-[200px]">{site.description}</div>
-                                            </td>
-                                            <td className="px-6 py-4 font-mono text-xs text-gray-500">{site.user_id}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${site.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                    site.status === 'paused' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'
-                                                    }`}>
-                                                    {site.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-500">{new Date(site.created_at).toLocaleDateString()}</td>
-                                            <td className="px-6 py-4">
-                                                {site.is_paid ? (
-                                                    <span className="text-blue-600 font-bold flex items-center gap-1"><Clock size={12} /> 유료</span>
-                                                ) : (
-                                                    <span className="text-gray-400">무료</span>
-                                                )}
-                                            </td>
+
+                        {/* Filters */}
+                        <div className="flex items-center gap-3 bg-white p-2 border border-gray-200 rounded-2xl w-fit">
+                            <Filter size={16} className="ml-2 text-gray-400" />
+                            {(['day', 'week', 'month', 'all'] as const).map(range => (
+                                <button
+                                    key={range}
+                                    onClick={() => setFilterRange(range)}
+                                    className={`px-4 py-1.5 rounded-xl text-sm font-bold transition ${filterRange === range ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                                >
+                                    {range === 'day' ? '오늘' : range === 'week' ? '주간' : range === 'month' ? '월간' : '전체'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Site List Grouped by User */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                    📂 사용자별 사이트 현황
+                                </h3>
+                            </div>
+                            <div className="divide-y divide-gray-50">
+                                {Object.entries(groupSitesByUser()).map(([userId, userSites]) => (
+                                    <div key={userId} className="group">
+                                        <button
+                                            onClick={() => toggleUserExpand(userId)}
+                                            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-gray-100 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs">
+                                                    {getShortUserId(userId)}
+                                                </div>
+                                                <div className="text-left">
+                                                    <div className="font-bold text-gray-900">{userId}</div>
+                                                    <div className="text-xs text-gray-400">총 {userSites.length}개의 사이트 보유</div>
+                                                </div>
+                                            </div>
+                                            {expandedUsers.includes(userId) ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                                        </button>
+
+                                        {expandedUsers.includes(userId) && (
+                                            <div className="px-6 pb-6 pt-2 bg-gray-50/50">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {userSites.map(site => (
+                                                        <div key={site.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <h4 className="font-bold text-gray-900 truncate flex-1">{site.name || '(무제)'}</h4>
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${site.is_paid ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                                                                    {site.is_paid ? 'Paid' : 'Free'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="space-y-2 text-xs">
+                                                                <div className="flex items-center gap-2 text-gray-500">
+                                                                    <Clock size={12} />
+                                                                    <span>{formatTimeRemaining(site.expires_at, site.is_paid)}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-gray-500">
+                                                                    <Calendar size={12} />
+                                                                    <span>생성일: {new Date(site.created_at).toLocaleDateString()}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-blue-500 font-medium">
+                                                                    <Eye size={12} />
+                                                                    <a href={`/site?id=${site.id}`} target="_blank" rel="noreferrer" className="hover:underline">
+                                                                        사이트 보기
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Transaction History */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="bg-purple-50 px-6 py-4 border-b border-purple-100">
+                                <h3 className="font-bold text-purple-900 flex items-center gap-2">
+                                    💳 상세 결제 내역 ({filterRange})
+                                </h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-50 text-gray-500 border-b">
+                                        <tr>
+                                            <th className="px-6 py-3">날짜</th>
+                                            <th className="px-6 py-3">소유자 ID</th>
+                                            <th className="px-6 py-3">사이트</th>
+                                            <th className="px-6 py-3">금액</th>
+                                            <th className="px-6 py-3">수단</th>
+                                            <th className="px-6 py-3">쿠폰</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {getFilteredPayments().length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-10 text-center text-gray-400">결제 내역이 없습니다.</td>
+                                            </tr>
+                                        ) : (
+                                            getFilteredPayments().map(pay => (
+                                                <tr key={pay.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 text-gray-500">{new Date(pay.created_at).toLocaleString()}</td>
+                                                    <td className="px-6 py-4 font-mono text-[10px] text-gray-400">{getShortUserId(pay.user_id)}...</td>
+                                                    <td className="px-6 py-4 text-gray-900 font-medium">
+                                                        {allSites.find(s => s.id === pay.site_id)?.name || '삭제된 사이트'}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-bold">{pay.amount.toLocaleString()}원</td>
+                                                    <td className="px-6 py-4 uppercase">
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${pay.method === 'kakaopay' ? 'bg-yellow-100 text-yellow-800' :
+                                                            pay.method === 'coupon' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                                                            }`}>
+                                                            {pay.method}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-gray-400">{pay.coupon_code || '-'}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -229,19 +411,7 @@ export default function DashboardPage() {
                                         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-6 bg-gray-50 p-3 rounded-lg">
                                             <AlertCircle size={16} />
                                             <span>
-                                                무료 체험 / 결제 필요
-                                                {site.expires_at && !site.is_paid && (() => {
-                                                    const now = new Date().getTime();
-                                                    const expireTime = new Date(site.expires_at).getTime();
-                                                    const diff = expireTime - now;
-                                                    if (diff > 0) {
-                                                        const hours = Math.floor(diff / (1000 * 60 * 60));
-                                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                        return ` (${hours}시간 ${minutes}분 남음)`;
-                                                    } else {
-                                                        return ` (만료됨)`;
-                                                    }
-                                                })()}
+                                                {site.is_paid ? '👑 프리미엄' : '🎁 무료 체험'} | {formatTimeRemaining(site.expires_at, site.is_paid)}
                                             </span>
                                         </div>
                                     )}

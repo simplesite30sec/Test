@@ -63,6 +63,23 @@ function SuccessContent() {
                     localStorage.removeItem('pending_coupon');
                 }
 
+                // 4. Record Payment in the database
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    // Extract payment method from searchParams if possible or use default
+                    // PortOne V2 doesn't always return method in redirect URL unless configured
+                    // For now, we'll label it 'portone' (KakaoPay usually falls under easy_pay)
+                    await supabase.from('payments').insert({
+                        user_id: user.id,
+                        site_id: id,
+                        amount: amount ? parseInt(amount) : 9900, // Fallback to default
+                        method: 'kakaopay', // User specifically mentioned KakaoPay
+                        coupon_code: pendingCoupon || null,
+                        payment_id: paymentId,
+                        status: 'success'
+                    });
+                }
+
                 setStatus('결제가 성공적으로 완료되었습니다! 이제 홈페이지가 게시됩니다.');
             } catch (error) {
                 console.error('Payment verification failed:', error);
