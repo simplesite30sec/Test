@@ -1,19 +1,18 @@
-export const runtime = 'edge';
-import { Phone, MapPin, ArrowRight } from 'lucide-react';
+'use client';
 
-export default function Preview({
-    searchParams,
-}: {
-    searchParams: { [key: string]: string | undefined };
-}) {
-    const {
-        name = 'My Website',
-        slogan = 'Welcome to my website',
-        description = 'No description provided.',
-        phone = '000-0000-0000',
-        address = 'Somewhere on Earth',
-        color = '#000000',
-    } = searchParams;
+import { Phone, MapPin, ArrowRight } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+function PreviewContent() {
+    const searchParams = useSearchParams();
+
+    const name = searchParams.get('name') || 'My Website';
+    const slogan = searchParams.get('slogan') || 'Welcome to my website';
+    const description = searchParams.get('description') || 'No description provided.';
+    const phone = searchParams.get('phone') || '000-0000-0000';
+    const address = searchParams.get('address') || 'Somewhere on Earth';
+    const color = searchParams.get('color') || '#000000';
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-gray-200">
@@ -100,5 +99,13 @@ export default function Preview({
                 </div>
             </footer>
         </div>
+    );
+}
+
+export default function Preview() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">로딩 중...</div>}>
+            <PreviewContent />
+        </Suspense>
     );
 }

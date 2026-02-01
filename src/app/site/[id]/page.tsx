@@ -1,24 +1,44 @@
+'use client';
 
+import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import SiteViewer from '@/components/SiteViewer';
+import { useParams } from 'next/navigation';
 
-// Revalidate every 60 seconds (ISR)
-export const revalidate = 60;
-export const runtime = 'edge';
+export default function SitePage() {
+    const params = useParams();
+    const id = params.id as string;
+    const [initialData, setInitialData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-export default async function SitePage({ params }: { params: { id: string } }) {
-    let site = null;
-    try {
-        const { data, error } = await supabase
-            .from('sites')
-            .select('*')
-            .eq('id', params.id)
-            .single();
-        if (!error) site = data;
-    } catch {
-        // Supabase fetch failed (e.g. invalid URL or offline)
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('sites')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                if (!error && data) {
+                    setInitialData(data);
+                }
+            } catch {
+                // Supabase fetch failed
+            }
+            setLoading(false);
+        };
+        if (id) {
+            loadData();
+        }
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-gray-500">로딩 중...</div>
+            </div>
+        );
     }
 
-    // We pass null if site is not found on server, allowing Client Component to check LocalStorage
-    return <SiteViewer initialData={site} id={params.id} />;
+    return <SiteViewer initialData={initialData} id={id} />;
 }
