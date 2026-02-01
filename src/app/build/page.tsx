@@ -272,12 +272,12 @@ function HomeContent() {
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
-            const { error: uploadError } = await supabase.storage.from('image').upload(filePath, file);
+            const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
             if (uploadError) {
                 console.error('Upload error:', uploadError);
                 throw new Error(`Upload failed: ${uploadError.message}`);
             }
-            const { data } = supabase.storage.from('image').getPublicUrl(filePath);
+            const { data } = supabase.storage.from('images').getPublicUrl(filePath);
             return data.publicUrl;
         } catch (e) {
             console.error('File upload error:', e);
