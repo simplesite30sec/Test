@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail } from 'lucide-react';
+import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -58,9 +58,72 @@ function HomeContent() {
         return () => subscription.unsubscribe();
     }, [router]);
 
+
+
+    // Accordion Component (Internal)
+    const AccordionSection = ({
+        title,
+        icon: Icon,
+        children,
+        isOpen,
+        onToggle,
+        isOptional = false,
+        subtitle = ''
+    }: {
+        title: string,
+        icon: any,
+        children: React.ReactNode,
+        isOpen: boolean,
+        onToggle: () => void,
+        isOptional?: boolean,
+        subtitle?: string
+    }) => (
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isOpen ? 'ring-2 ring-blue-100' : ''}`}>
+            <button
+                type="button"
+                onClick={onToggle}
+                className={`w-full flex items-center justify-between p-5 text-left transition-colors ${isOpen ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${isOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                        <Icon size={20} />
+                    </div>
+                    <div>
+                        <h2 className={`font-bold text-lg flex items-center gap-2 ${isOpen ? 'text-blue-900' : 'text-gray-700'}`}>
+                            {title}
+                            {isOptional && <span className="text-xs font-normal bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">선택 사항</span>}
+                        </h2>
+                        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {isOpen ? <ChevronUp size={20} className="text-blue-500" /> : <ChevronDown size={20} className="text-gray-400" />}
+                </div>
+            </button>
+
+            {isOpen && (
+                <div className="p-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         router.push('/login');
+    };
+
+    const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic', 'design']));
+
+    const toggleSection = (section: string) => {
+        const newSet = new Set(openSections);
+        if (newSet.has(section)) {
+            newSet.delete(section);
+        } else {
+            newSet.add(section);
+        }
+        setOpenSections(newSet);
     };
 
     const [formData, setFormData] = useState({
@@ -471,7 +534,7 @@ function HomeContent() {
     return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10 flex flex-col gap-8 p-8">
-                <div className="bg-blue-600 p-8 text-white">
+                <div className="bg-blue-600 p-8 text-white rounded-t-2xl -mt-8 -mx-8 mb-8 shadow-lg">
                     <div className="flex justify-between items-start">
                         <div>
                             <h1 className="text-3xl font-bold mb-2">
@@ -481,395 +544,429 @@ function HomeContent() {
                                 {isPaid ? '제한 없는 나만의 홈페이지' : (editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!')}
                             </p>
                         </div>
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition mr-2"
-                        >
-                            <LayoutDashboard size={14} />
-                            대시보드
-                        </Link>
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition"
-                        >
-                            <LogOut size={14} />
-                            로그아웃
-                        </button>
+                        <div className="flex gap-2">
+                            <Link
+                                href="/dashboard"
+                                className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition"
+                            >
+                                <LayoutDashboard size={14} />
+                                대시보드
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition"
+                            >
+                                <LogOut size={14} />
+                                로그아웃
+                            </button>
+                        </div>
                     </div>
                     {user && (
                         <p className="mt-4 text-sm opacity-75">👤 {user.email}</p>
                     )}
+                    <div className="mt-6 bg-blue-500/30 p-4 rounded-lg flex items-start gap-3 backdrop-blur-sm">
+                        <CheckCircle2 size={20} className="mt-0.5 flex-shrink-0" />
+                        <div className="text-sm">
+                            <p className="font-bold mb-1">필요한 정보만 골라서 입력하세요!</p>
+                            <p className="opacity-90">모든 칸을 채울 필요가 없습니다. 비워둔 항목은 실제 홈페이지에서 자동으로 숨겨집니다.</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* 1. Basic Info */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold border-b pb-2">1. 기본 정보</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Building2 size={16} /> 업체명</label>
-                            <input type="text" name="name" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.name} onChange={handleChange} />
+                <div className="space-y-6">
+                    {/* 1. Basic Info */}
+                    <AccordionSection
+                        title="1. 기본 정보"
+                        icon={Building2}
+                        isOpen={openSections.has('basic')}
+                        onToggle={() => toggleSection('basic')}
+                        subtitle="업체명, 슬로건 등 기본적인 정보를 입력합니다."
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">업체명</label>
+                                <input type="text" name="name" placeholder="예: 하루 식당" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={formData.name} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">한줄 슬로건</label>
+                                <input type="text" name="slogan" placeholder="예: 정성을 담은 따뜻한 한 끼" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={formData.slogan} onChange={handleChange} />
+                            </div>
                         </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MousePointerClick size={16} /> 한줄 슬로건</label>
-                            <input type="text" name="slogan" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.slogan} onChange={handleChange} />
+                        <div className="mt-4">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">상세 설명</label>
+                            <textarea name="description" rows={3} placeholder="업체에 대한 자세한 소개를 적어주세요." className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 bg-white shadow-sm" value={formData.description} onChange={handleChange} />
                         </div>
-                    </div>
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><FileText size={16} /> 상세 설명</label>
-                        <textarea name="description" rows={3} className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 bg-white" value={formData.description} onChange={handleChange} />
-                    </div>
-                </section>
+                    </AccordionSection>
 
-                {/* 2. Design & Contact */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold border-b pb-2">2. 디자인 & 연락처</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Palette size={16} /> 테마 색상</label>
-                            <div className="flex items-center gap-3">
-                                <input type="color" name="color" className="h-10 w-20 cursor-pointer" value={formData.color} onChange={handleChange} />
-                                <div className="h-10 w-full rounded" style={{ backgroundColor: formData.color }}></div>
+                    {/* 2. Design & Contact */}
+                    <AccordionSection
+                        title="2. 디자인 & 연락처"
+                        icon={Palette}
+                        isOpen={openSections.has('design')}
+                        onToggle={() => toggleSection('design')}
+                        subtitle="브랜드 컬러와 연락처 정보를 설정합니다."
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">테마 색상</label>
+                                <div className="flex items-center gap-3">
+                                    <input type="color" name="color" className="h-10 w-20 cursor-pointer rounded overflow-hidden shadow-sm border border-gray-200" value={formData.color} onChange={handleChange} />
+                                    <div className="h-10 w-full rounded shadow-sm border border-gray-200" style={{ backgroundColor: formData.color }}></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">배경 투명도 ({formData.heroOpacity}%)</label>
+                                <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2" value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
                             </div>
                         </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Sliders size={16} /> 배경 투명도 ({formData.heroOpacity}%)</label>
-                            <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 메인 배경 이미지 (최대 7MB)</label>
-                        {heroImageUrl && (
-                            <div className="mb-2 relative w-32 h-20 rounded overflow-hidden border border-gray-200">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={heroImageUrl} alt="Current Hero" className="w-full h-full object-cover" />
-                            </div>
-                        )}
-                        <input type="file" accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700" onChange={handleHeroImageChange} />
-                    </div>
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><ImageIcon size={16} /> 로고 이미지 - 헤더 및 파비콘</label>
-                        <div className="flex items-center gap-4">
-                            {(logoUrl || logoFile) && (
-                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                        <div className="mb-6">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">메인 배경 이미지 (최대 7MB)</label>
+                            {heroImageUrl && (
+                                <div className="mb-2 relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={logoFile ? URL.createObjectURL(logoFile) : logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                                    <img src={heroImageUrl} alt="Current Hero" className="w-full h-full object-cover" />
                                 </div>
                             )}
-                            <input
-                                type="file"
-                                accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml"
-                                className="block flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-green-50 file:text-green-700"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0] && validateImage(e.target.files[0])) {
-                                        setLogoFile(e.target.files[0]);
-                                    }
-                                }}
-                            />
+                            <input type="file" accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-blue-700 font-semibold file:border-0 hover:file:bg-blue-100 transition" onChange={handleHeroImageChange} />
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">헤더에 로고가 표시되고 브라우저 탭에 파비콘으로 사용됩니다.</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Phone size={16} /> 전화번호 (최대 3개)</label>
-                            <div className="space-y-2">
-                                <input type="tel" name="phone" placeholder="대표 전화번호" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone} onChange={handleChange} />
-                                <input type="tel" name="phone2" placeholder="추가 번호 1 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone2} onChange={handleChange} />
-                                <input type="tel" name="phone3" placeholder="추가 번호 2 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.phone3} onChange={handleChange} />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 이메일 (선택)</label>
-                            <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-gray-900 bg-white" value={socialLinks.email || ''} onChange={handleSocialChange} />
-
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MapPin size={16} /> 주소</label>
-                            <input type="text" name="address" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.address} onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 네이버 지도 링크</label>
-                            <input type="text" name="naverMap" placeholder="https://map.naver.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.naverMap} onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 카카오 맵 링크</label>
-                            <input type="text" name="kakaoMap" placeholder="https://map.kakao.com/... (퍼가기 링크 권장)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.kakaoMap} onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Globe size={16} /> 구글 지도 링크</label>
-                            <input type="text" name="googleMap" placeholder="https://maps.app.goo.gl/..." className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={formData.googleMap} onChange={handleChange} />
-                        </div>
-                    </div>
-                </section>
-
-                {/* 3. Social Media */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold border-b pb-2">3. 소셜 미디어 (선택)</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Instagram size={16} /> 인스타그램</label>
-                            <input type="text" name="instagram" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.instagram} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Facebook size={16} /> 페이스북</label>
-                            <input type="text" name="facebook" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.facebook} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 블로그/카페</label>
-                            <input type="text" name="blog" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.blog} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Youtube size={16} /> 유튜브</label>
-                            <input type="text" name="youtube" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.youtube} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
-                                틱톡
-                            </label>
-                            <input type="text" name="tiktok" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.tiktok} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12c-2-2-2-5 0-7s4-2 6 0"></path><path d="M12 12c2 2 2 5 0 7s-4 2-6 0"></path><path d="M12 12c-2 2-5 2-7 0s-2-4 0-6"></path><path d="M12 12c2-2 5-2 7 0s2 4 0 6"></path></svg>
-                                스레드
-                            </label>
-                            <input type="text" name="threads" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.threads} onChange={handleSocialChange} />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Mail size={16} /> 이메일</label>
-                            <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" value={socialLinks.email} onChange={handleSocialChange} />
-                        </div>
-                    </div>
-                </section>
-
-                {/* 4. Reviews */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <h2 className="text-xl font-bold">4. 고객 후기</h2>
-                        <button type="button" onClick={addReview} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
-                    </div>
-                    <div className="space-y-4">
-                        {reviews.length === 0 && <p className="text-sm text-gray-400 text-center py-4">등록된 후기가 없습니다.</p>}
-                        {reviews.map((review) => (
-                            <div key={review.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
-                                <button type="button" onClick={() => removeReview(review.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                                <div className="space-y-3">
-                                    <div className="flex gap-4 items-start">
-                                        {/* Avatar Upload (Optional) */}
-                                        <div className="flex-shrink-0 text-center">
-                                            <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-300 mb-1">
-                                                {review.avatar_url || review.avatar_file ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img
-                                                        src={review.avatar_file ? URL.createObjectURL(review.avatar_file) : review.avatar_url}
-                                                        alt=""
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">👤</div>
-                                                )}
-                                            </div>
-                                            <label className="text-xs text-blue-600 cursor-pointer hover:underline">
-                                                사진 변경
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        if (e.target.files?.[0]) {
-                                                            updateReview(review.id, 'avatar_file', e.target.files[0]);
-                                                        }
-                                                    }}
-                                                />
-                                            </label>
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
-                                            <input type="date" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={review.date || ''} onChange={(e) => updateReview(review.id, 'date', e.target.value)} />
-                                        </div>
+                        <div className="mb-6">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">로고 이미지 (헤더/파비콘)</label>
+                            <div className="flex items-center gap-4">
+                                {(logoUrl || logoFile) && (
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center shrink-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={logoFile ? URL.createObjectURL(logoFile) : logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
                                     </div>
-                                    <textarea placeholder="후기 내용" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 resize-none h-20 text-gray-900 bg-white" value={review.content} onChange={(e) => updateReview(review.id, 'content', e.target.value)} />
-                                    <div className="flex items-center gap-2">
-                                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                                        <input type="number" min="1" max="5" className="w-16 px-2 py-1 border rounded text-gray-900 bg-white" value={review.rating} onChange={(e) => updateReview(review.id, 'rating', Number(e.target.value))} />
-                                    </div>
-                                </div>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-green-50 file:text-green-700 font-semibold file:border-0 hover:file:bg-green-100 transition"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0] && validateImage(e.target.files[0])) {
+                                            setLogoFile(e.target.files[0]);
+                                        }
+                                    }}
+                                />
                             </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* 5. Portfolio */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <h2 className="text-xl font-bold">5. 메뉴 / 포트폴리오</h2>
-                        <button type="button" onClick={addPortfolioItem} className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center gap-1"><Plus size={14} /> 추가하기</button>
-                    </div>
-                    {portfolio.length === 0 && <p className="text-center text-gray-400 py-4 text-sm">항목을 추가해주세요.</p>}
-                    <div className="space-y-4">
-                        {portfolio.map((item) => (
-                            <div key={item.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200">
-                                <button type="button" onClick={() => removePortfolioItem(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                                <div className="space-y-3">
-                                    <input type="text" placeholder="제목" className="w-full px-3 py-2 rounded border outline-none text-gray-900 bg-white" value={item.title} onChange={(e) => updatePortfolioItem(item.id, 'title', e.target.value)} />
-                                    <textarea placeholder="설명" className="w-full px-3 py-2 rounded border outline-none resize-none h-20 text-gray-900 bg-white" value={item.desc} onChange={(e) => updatePortfolioItem(item.id, 'desc', e.target.value)} />
-                                    <div className="flex gap-4 items-center">
-                                        {item.imageUrl && (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={item.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
-                                        )}
-                                        <input type="file" accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml" className="text-xs text-gray-500" onChange={(e) => {
-                                            if (e.target.files?.[0] && validateImage(e.target.files[0])) {
-                                                updatePortfolioItem(item.id, 'file', e.target.files[0]);
-                                            }
-                                        }} />
-                                    </div>
-                                </div>
+                            <p className="text-xs text-gray-400 mt-2">등록시 헤더 좌측 상단에 표시되며, 브라우저 탭 아이콘(Favicon)으로도 사용됩니다.</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 mb-4">
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">대표 전화번호</label>
+                                <input type="tel" name="phone" placeholder="010-1234-5678" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={formData.phone} onChange={handleChange} />
                             </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* 6. Section Order */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-bold border-b pb-2">6. 섹션 노출 순서</h2>
-                    <p className="text-sm text-gray-500 mb-4">화살표를 눌러 섹션의 순서를 변경하세요.</p>
-
-                    <div className="space-y-3">
-                        {sectionOrder.map((section, index) => (
-                            <div key={section} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-6 h-6 flex items-center justify-center bg-white rounded-full text-xs font-bold text-gray-400 border border-gray-200">
-                                        {index + 1}
-                                    </span>
-                                    <span className="font-bold text-gray-700">{SECTION_LABELS[section] || section}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newOrder = [...sectionOrder];
-                                            if (index > 0) {
-                                                [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
-                                                setSectionOrder(newOrder);
-                                            }
-                                        }}
-                                        disabled={index === 0}
-                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 transition"
-                                    >
-                                        <ArrowUp size={18} />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newOrder = [...sectionOrder];
-                                            if (index < sectionOrder.length - 1) {
-                                                [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-                                                setSectionOrder(newOrder);
-                                            }
-                                        }}
-                                        disabled={index === sectionOrder.length - 1}
-                                        className="p-2 hover:bg-white rounded-lg text-gray-600 disabled:opacity-30 transition"
-                                    >
-                                        <ArrowDown size={18} />
-                                    </button>
-                                </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <input type="tel" name="phone2" placeholder="추가 번호 1 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm text-sm" value={formData.phone2} onChange={handleChange} />
+                                <input type="tel" name="phone3" placeholder="추가 번호 2 (선택)" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm text-sm" value={formData.phone3} onChange={handleChange} />
                             </div>
-                        ))}
-                    </div>
-                    <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs">
-                        💡 &apos;Q&A&apos;나 &apos;문의하기&apos;는 애드온 스토어에서 활성화해야 실제 화면에 나타납니다.
-                    </div>
-                </section>
+                        </div>
+                        <div className="mb-4">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">주소</label>
+                            <input type="text" name="address" placeholder="상세 주소를 입력하세요" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={formData.address} onChange={handleChange} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">네이버 지도 링크</label>
+                                <input type="text" name="naverMap" placeholder="URL 입력" className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={formData.naverMap} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">카카오 맵 링크</label>
+                                <input type="text" name="kakaoMap" placeholder="URL 입력" className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={formData.kakaoMap} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">구글 지도 링크</label>
+                                <input type="text" name="googleMap" placeholder="URL 입력" className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={formData.googleMap} onChange={handleChange} />
+                            </div>
+                        </div>
+                    </AccordionSection>
 
-                {/* 7. Section Titles */}
-                <section className="bg-gray-50 p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> 7. 섹션 제목 설정</h3>
-                    <p className="text-sm text-gray-600 mb-6">각 섹션의 제목을 원하는 언어나 문구로 변경할 수 있습니다.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">소개 섹션 (About)</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.about}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, about: e.target.value })}
-                                placeholder="About Us"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">메뉴/포트폴리오 섹션</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.menu}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, menu: e.target.value })}
-                                placeholder="Menu / Portfolio"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">고객 후기 섹션</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.reviews}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, reviews: e.target.value })}
-                                placeholder="Customer Reviews"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">연락처 섹션</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.contact}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, contact: e.target.value })}
-                                placeholder="Contact & Location"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">문의하기 섹션 (애드온)</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.inquiry}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, inquiry: e.target.value })}
-                                placeholder="문의하기"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Q&A 섹션 (애드온)</label>
-                            <input
-                                type="text"
-                                value={sectionTitles.qna}
-                                onChange={(e) => setSectionTitles({ ...sectionTitles, qna: e.target.value })}
-                                placeholder="Q&A"
-                                className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* 8. Font Selection */}
-                <section className="bg-gray-50 p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Palette size={20} /> 8. 글씨 폰트</h3>
-                    <p className="text-sm text-gray-600 mb-4">사이트 전체에 적용될 글씨체를 선택하세요.</p>
-                    <select
-                        value={fontFamily}
-                        onChange={(e) => setFontFamily(e.target.value)}
-                        className="w-full md:w-1/2 px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    {/* 3. Social Media */}
+                    <AccordionSection
+                        title="3. 소셜 미디어"
+                        icon={Instagram}
+                        isOpen={openSections.has('social')}
+                        onToggle={() => toggleSection('social')}
+                        isOptional={true}
+                        subtitle="운영 중인 SNS가 있다면 링크를 입력하세요."
                     >
-                        {FONT_OPTIONS.map(font => (
-                            <option key={font.value} value={font.value}>{font.label}</option>
-                        ))}
-                    </select>
-                </section>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Instagram size={16} /> 인스타그램</label>
+                                <input type="text" name="instagram" placeholder="@username or URL" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.instagram} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Facebook size={16} /> 페이스북</label>
+                                <input type="text" name="facebook" placeholder="URL" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.facebook} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><MessageCircle size={16} /> 블로그/카페</label>
+                                <input type="text" name="blog" placeholder="URL" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.blog} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Youtube size={16} /> 유튜브</label>
+                                <input type="text" name="youtube" placeholder="URL" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.youtube} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+                                    틱톡
+                                </label>
+                                <input type="text" name="tiktok" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.tiktok} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12c-2-2-2-5 0-7s4-2 6 0"></path><path d="M12 12c2 2 2 5 0 7s-4 2-6 0"></path><path d="M12 12c-2 2-5 2-7 0s-2-4 0-6"></path><path d="M12 12c2-2 5-2 7 0s2 4 0 6"></path></svg>
+                                    스레드
+                                </label>
+                                <input type="text" name="threads" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.threads} onChange={handleSocialChange} />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"><Mail size={16} /> 이메일</label>
+                                <input type="email" name="email" placeholder="example@email.com" className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm" value={socialLinks.email} onChange={handleSocialChange} />
+                            </div>
+                        </div>
+                    </AccordionSection>
+
+                    {/* 4. Reviews */}
+                    <AccordionSection
+                        title="4. 고객 후기"
+                        icon={Star}
+                        isOpen={openSections.has('reviews')}
+                        onToggle={() => toggleSection('reviews')}
+                        isOptional={true}
+                        subtitle="고객들의 좋은 평가를 자랑해보세요."
+                    >
+                        <div className="flex justify-end mb-4">
+                            <button type="button" onClick={addReview} className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition"><Plus size={16} /> 후기 추가하기</button>
+                        </div>
+                        <div className="space-y-4">
+                            {reviews.length === 0 && <p className="text-sm text-gray-400 text-center py-6 bg-gray-50 rounded-lg">등록된 후기가 없습니다. &#39;추가하기&#39; 버튼을 눌러 작성해보세요.</p>}
+                            {reviews.map((review) => (
+                                <div key={review.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200 hover:border-blue-200 transition">
+                                    <button type="button" onClick={() => removeReview(review.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-4 items-start">
+                                            {/* Avatar Upload (Optional) */}
+                                            <div className="flex-shrink-0 text-center">
+                                                <div className="w-14 h-14 rounded-full bg-white overflow-hidden border border-gray-200 mb-1 shadow-sm">
+                                                    {review.avatar_url || review.avatar_file ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={review.avatar_file ? URL.createObjectURL(review.avatar_file) : review.avatar_url}
+                                                            alt=""
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">👤</div>
+                                                    )}
+                                                </div>
+                                                <label className="text-xs text-blue-600 cursor-pointer hover:underline block">
+                                                    사진 변경
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            if (e.target.files?.[0]) {
+                                                                updateReview(review.id, 'avatar_file', e.target.files[0]);
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
+                                            </div>
+                                            <div className="flex-1 space-y-2">
+                                                <input type="text" placeholder="이름 (예: 김철수)" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white" value={review.name} onChange={(e) => updateReview(review.id, 'name', e.target.value)} />
+                                                <input type="date" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 bg-white text-sm" value={review.date || ''} onChange={(e) => updateReview(review.id, 'date', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <textarea placeholder="후기 내용" className="w-full px-3 py-2 rounded border outline-none focus:ring-1 focus:ring-blue-500 resize-none h-20 text-gray-900 bg-white" value={review.content} onChange={(e) => updateReview(review.id, 'content', e.target.value)} />
+                                        <div className="flex items-center gap-2">
+                                            <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                                            <input type="number" min="1" max="5" className="w-16 px-2 py-1 border rounded text-gray-900 bg-white" value={review.rating} onChange={(e) => updateReview(review.id, 'rating', Number(e.target.value))} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </AccordionSection>
+
+                    {/* 5. Portfolio */}
+                    <AccordionSection
+                        title="5. 메뉴 / 포트폴리오"
+                        icon={ImageIcon}
+                        isOpen={openSections.has('portfolio')}
+                        onToggle={() => toggleSection('portfolio')}
+                        isOptional={true}
+                        subtitle="판매하는 상품이나 작업물을 소개하세요."
+                    >
+                        <div className="flex justify-end mb-4">
+                            <button type="button" onClick={addPortfolioItem} className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition"><Plus size={16} /> 항목 추가하기</button>
+                        </div>
+                        {portfolio.length === 0 && <p className="text-center text-gray-400 py-6 bg-gray-50 rounded-lg text-sm">등록된 항목이 없습니다.</p>}
+                        <div className="space-y-4">
+                            {portfolio.map((item) => (
+                                <div key={item.id} className="bg-gray-50 p-4 rounded-xl relative border border-gray-200 hover:border-blue-200 transition">
+                                    <button type="button" onClick={() => removePortfolioItem(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                                    <div className="space-y-3">
+                                        <input type="text" placeholder="제목 (예: 대표 메뉴 A)" className="w-full px-3 py-2 rounded border outline-none text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 font-medium" value={item.title} onChange={(e) => updatePortfolioItem(item.id, 'title', e.target.value)} />
+                                        <textarea placeholder="설명 (가격, 특징 등)" className="w-full px-3 py-2 rounded border outline-none resize-none h-20 text-gray-900 bg-white focus:ring-1 focus:ring-blue-500" value={item.desc} onChange={(e) => updatePortfolioItem(item.id, 'desc', e.target.value)} />
+                                        <div className="flex gap-4 items-center mt-2">
+                                            {item.imageUrl && (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={item.imageUrl} alt="" className="w-16 h-16 object-cover rounded shadow-sm" />
+                                            )}
+                                            <input type="file" accept="image/*" className="text-xs text-gray-500" onChange={(e) => {
+                                                if (e.target.files?.[0] && validateImage(e.target.files[0])) {
+                                                    updatePortfolioItem(item.id, 'file', e.target.files[0]);
+                                                }
+                                            }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </AccordionSection>
+
+                    {/* 6. Section Order */}
+                    <AccordionSection
+                        title="6. 섹션 순서 / 제목 설정"
+                        icon={Sliders}
+                        isOpen={openSections.has('order')}
+                        onToggle={() => toggleSection('order')}
+                        subtitle="화면에 표시될 순서와 각 섹션의 제목을 변경합니다."
+                    >
+                        <h4 className="font-bold text-gray-700 mb-3 text-sm">섹션 노출 순서</h4>
+                        <div className="space-y-2 mb-8">
+                            {sectionOrder.map((section, index) => (
+                                <div key={section} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-5 h-5 flex items-center justify-center bg-white rounded-full text-[10px] font-bold text-gray-400 border border-gray-200">
+                                            {index + 1}
+                                        </span>
+                                        <span className="font-medium text-gray-700 text-sm">{SECTION_LABELS[section] || section}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newOrder = [...sectionOrder];
+                                                if (index > 0) {
+                                                    [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+                                                    setSectionOrder(newOrder);
+                                                }
+                                            }}
+                                            disabled={index === 0}
+                                            className="p-1.5 hover:bg-white rounded-md text-gray-500 disabled:opacity-30 transition"
+                                        >
+                                            <ArrowUp size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newOrder = [...sectionOrder];
+                                                if (index < sectionOrder.length - 1) {
+                                                    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                                                    setSectionOrder(newOrder);
+                                                }
+                                            }}
+                                            disabled={index === sectionOrder.length - 1}
+                                            className="p-1.5 hover:bg-white rounded-md text-gray-500 disabled:opacity-30 transition"
+                                        >
+                                            <ArrowDown size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="mt-2 text-[11px] text-blue-600 bg-blue-50 p-2 rounded">
+                                * 'Q&A'와 '문의하기'는 애드온 구매 후 표시됩니다.
+                            </div>
+                        </div>
+
+                        <h4 className="font-bold text-gray-700 mb-3 text-sm border-t pt-6">섹션 제목 설정 (커스텀)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">소개 섹션</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.about}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, about: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">메뉴/포트폴리오 섹션</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.menu}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, menu: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">리뷰 섹션</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.reviews}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, reviews: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">연락처 섹션</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.contact}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, contact: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">문의하기 섹션 (애드온)</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.inquiry}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, inquiry: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Q&A 섹션 (애드온)</label>
+                                <input
+                                    type="text"
+                                    value={sectionTitles.qna}
+                                    onChange={(e) => setSectionTitles({ ...sectionTitles, qna: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
+                        </div>
+                    </AccordionSection>
+
+                    {/* 7. Font Selection */}
+                    <AccordionSection
+                        title="7. 글씨 폰트"
+                        icon={Type}
+                        isOpen={openSections.has('font')}
+                        onToggle={() => toggleSection('font')}
+                        subtitle="사이트 전체에 적용될 글씨체를 선택하세요."
+                    >
+                        <select
+                            value={fontFamily}
+                            onChange={(e) => setFontFamily(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                        >
+                            {FONT_OPTIONS.map(font => (
+                                <option key={font.value} value={font.value}>{font.label}</option>
+                            ))}
+                        </select>
+                    </AccordionSection>
+                </div>
 
                 <button type="submit" disabled={loading} className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg mt-6 ${loading ? 'opacity-70' : ''}`}>
                     {loading ? '처리 중...' : (editId ? '수정 완료하기 ✨' : '홈페이지 생성하기 ✨')}
                 </button>
-            </form>
+            </form >
         </main >
     );
 }
