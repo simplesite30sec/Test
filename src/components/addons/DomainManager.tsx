@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, CheckCircle, XCircle, AlertTriangle, CreditCard, Loader2 } from 'lucide-react';
+import { Search, CheckCircle, XCircle, CreditCard, Loader2 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
 export default function DomainManager({ siteId }: { siteId: string }) {
@@ -106,7 +106,7 @@ export default function DomainManager({ siteId }: { siteId: string }) {
                         <div className="mt-4 pt-4 border-t border-green-200">
                             <div className="bg-white/50 p-3 rounded-lg text-xs text-green-800 mb-4">
                                 <strong>⚠️ 프리미엄 도메인 안내</strong><br />
-                                만약 선택하신 도메인이 '프리미엄(고가)' 도메인일 경우, <br />
+                                만약 선택하신 도메인이 &apos;프리미엄(고가)&apos; 도메인일 경우, <br />
                                 구매가 취소되거나 추가 비용이 발생할 수 있습니다.
                             </div>
                             <button

@@ -1,4 +1,4 @@
-import { Metadata, ResolvingMetadata } from 'next';
+import { Metadata } from 'next';
 import { createClient } from '@/utils/supabase/client';
 import SiteViewer from '@/components/SiteViewer';
 import { notFound } from 'next/navigation';
@@ -10,8 +10,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-    { params }: Props,
-    parent: ResolvingMetadata
+    { params }: Props
 ): Promise<Metadata> {
     const slug = params.slug;
     const supabase = createClient();

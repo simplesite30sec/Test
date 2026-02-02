@@ -48,7 +48,6 @@ export default function DashboardPage() {
     const [showStore, setShowStore] = useState(false);
     const [siteAddons, setSiteAddons] = useState<string[]>([]); // Active addons for selected site
     const [purchasedAddons, setPurchasedAddons] = useState<Record<string, { type: string, purchase_type: string, coupon_code?: string }>>({}); // Purchased addons with details
-    const [notificationEmail, setNotificationEmail] = useState(''); // For inquiry addon
     const [allSiteAddons, setAllSiteAddons] = useState<Record<string, string[]>>({}); // siteId -> addonTypes
 
     // Payment Modal State
@@ -277,27 +276,7 @@ export default function DashboardPage() {
     };
 
 
-    // Update addon settings (for inquiry email)
-    const handleUpdateSettings = async (addonId: string) => {
-        if (!selectedSiteId) return;
 
-        if (addonId === 'inquiry' && !notificationEmail) {
-            alert('알림 받을 이메일을 입력해주세요.');
-            return;
-        }
-
-        const { error } = await supabase
-            .from('site_addons')
-            .update({ config: { notification_email: notificationEmail } })
-            .eq('site_id', selectedSiteId)
-            .eq('addon_type', addonId);
-
-        if (!error) {
-            alert('설정이 변경되었습니다.');
-        } else {
-            alert('작업 실패');
-        }
-    };
 
     const isAdmin = user?.email === 'inmyeong320@naver.com';
 
@@ -812,15 +791,7 @@ export default function DashboardPage() {
                                                                 </button>
 
                                                                 {/* Settings Button (only for inquiry) */}
-                                                                {addon.id === 'inquiry' && (
-                                                                    <button
-                                                                        onClick={() => handleUpdateSettings(addon.id)}
-                                                                        className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition"
-                                                                        title="설정 변경"
-                                                                    >
-                                                                        ⚙️
-                                                                    </button>
-                                                                )}
+
                                                             </>
                                                         ) : (
                                                             <button
