@@ -31,7 +31,6 @@ export async function generateMetadata(
     }
 
     const previousImages = (await parent).openGraph?.images || [];
-    const heroImage = site.hero_image_url || [];
 
     return {
         title: site.name,
