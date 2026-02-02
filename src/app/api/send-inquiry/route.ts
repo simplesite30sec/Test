@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
     try {
@@ -54,12 +53,18 @@ export async function POST(request: NextRequest) {
 
         console.log(`Attempting to send inquiry email to: ${notificationEmail} for site: ${siteName}`);
 
-        // Send email via Resend
-        const { data, error } = await resend.emails.send({
-            from: 'SimpleSite <onboarding@resend.dev>',
-            to: notificationEmail,
-            subject: `[${siteName}] 새로운 문의가 도착했습니다`,
-            html: `
+        // Send email via Resend API directly (Edge compatible)
+        const resendRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+            },
+            body: JSON.stringify({
+                from: 'SimpleSite <onboarding@resend.dev>',
+                to: [notificationEmail],
+                subject: `[${siteName}] 새로운 문의가 도착했습니다`,
+                html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
                         새로운 문의
@@ -80,16 +85,22 @@ export async function POST(request: NextRequest) {
                         이 메일은 SimpleSite를 통해 자동으로 발송되었습니다.
                     </p>
                 </div>
-            `,
+            `
+            })
         });
 
-        if (error) {
-            console.error('Resend error:', error);
+        if (!resendRes.ok) {
+            const errorData = await resendRes.json();
+            console.error('Resend API error:', errorData);
             return NextResponse.json(
-                { error: 'Failed to send email', details: error },
+                { error: 'Failed to send email', details: errorData },
                 { status: 500 }
             );
         }
+
+        const data = await resendRes.json();
+
+
 
         return NextResponse.json({
             success: true,
