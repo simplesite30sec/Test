@@ -440,8 +440,8 @@ function HomeContent() {
                 }
             }
 
-            // Calculate expiration time (5 hours from now)
-            const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+            // Calculate expiration time (30 days from now)
+            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
             // Auto-generate slug if empty
             const finalSlug = formData.slug?.trim() || Math.random().toString(36).substring(2, 10);
@@ -567,7 +567,7 @@ function HomeContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <h1 className="text-3xl font-bold mb-2">
-                                {isPaid ? '👑 프리미엄 멤버십 (사용 중)' : '🎁 5시간 무료 체험'}
+                                {isPaid ? '👑 프리미엄 멤버십 (사용 중)' : '🎁 1개월 무료 체험'}
                             </h1>
                             <p className="opacity-90">
                                 {isPaid ? '제한 없는 나만의 홈페이지' : (editId ? '정보 수정' : '지금 바로 홈페이지를 만들어보세요!')}
@@ -597,7 +597,7 @@ function HomeContent() {
                     <div className="mt-6 bg-blue-500/30 p-4 rounded-lg flex items-start gap-3 backdrop-blur-sm">
                         <CheckCircle2 size={20} className="mt-0.5 flex-shrink-0" />
                         <div className="text-sm">
-                            <p className="font-bold mb-1">필요한 정보만 골라서 입력하세요!</p>
+                            <p className="font-bold">🎁 1개월 동안 모든 기능을 마음껏 써보세요!</p>
                             <p className="opacity-90">모든 칸을 채울 필요가 없습니다. 비워둔 항목은 실제 홈페이지에서 자동으로 숨겨집니다.</p>
                         </div>
                     </div>

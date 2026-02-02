@@ -39,7 +39,7 @@ export default function UserStatusBadge() {
 
     return (
         <Link href="/login" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition shadow-lg">
-            5시간 무료 체험
+            1개월 무료 체험
         </Link>
     );
 }

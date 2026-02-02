@@ -50,7 +50,7 @@ export default function LoginPage() {
                 <div className="mb-8">
                     <div className="bg-blue-50 rounded-2xl p-6 mb-6">
                         <div className="text-4xl mb-2">🎁</div>
-                        <h2 className="text-xl font-bold text-blue-900 mb-1">5시간 무료 체험</h2>
+                        <h2 className="text-xl font-bold text-blue-900 mb-1">1개월 무료 체험</h2>
                         <p className="text-blue-700 text-sm">로그인하고 바로 홈페이지를 만들어보세요!</p>
                     </div>
                 </div>

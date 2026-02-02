@@ -26,7 +26,7 @@ export default function LandingPage() {
       <main className="pt-24">
         {/* Hero */}
         <section className="px-6 py-20 md:py-32 text-center max-w-5xl mx-auto">
-          <div className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold mb-6">🎁 5시간 무료 체험</div>
+          <div className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold mb-6">🎁 1개월 무료 체험</div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight">
             단 30초 만에 만드는 <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">나만의 웹사이트</span>
@@ -36,7 +36,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
             <Link href="/login" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-200 transition transform hover:scale-105">
-              5시간 무료 체험 시작하기
+              1개월 무료 체험 시작하기
             </Link>
             <span className="text-sm text-gray-400 font-medium">결제 정보 없이 바로 시작!</span>
           </div>
@@ -72,7 +72,7 @@ export default function LandingPage() {
         <section id="pricing" className="px-6 py-24">
           <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">투명한 요금제</h2>
-            <p className="text-gray-500 mb-12">5시간 무료 체험 후, 원하는 플랜을 선택하세요.</p>
+            <p className="text-gray-500 mb-12">1개월 무료 체험 후, 원하는 플랜을 선택하세요.</p>
 
             <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch max-w-xl mx-auto">
               {/* Basic Plan */}

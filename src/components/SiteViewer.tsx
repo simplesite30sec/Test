@@ -369,7 +369,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-3">체험 시간이 만료되었습니다</h1>
                     <p className="text-gray-500 mb-8">
-                        5시간 무료 체험이 종료되었습니다.<br />
+                        1개월 무료 체험이 종료되었습니다.<br />
                         결제하시면 사이트를 계속 이용하실 수 있습니다.
                     </p>
 
@@ -418,9 +418,9 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         : { backgroundColor: hexToRgba(color, overlayOpacity) };
 
     const handlePublish = async () => {
-        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 5시간 동안 무료 체험이 시작됩니다.')) return;
+        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 1개월 동안 무료 체험이 시작됩니다.')) return;
 
-        const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
         const { error } = await supabase
             .from('sites')
@@ -434,7 +434,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         if (error) {
             alert('게시 실패: ' + error.message);
         } else {
-            alert('사이트가 성공적으로 게시되었습니다! 5시간 무료 체험이 시작됩니다.');
+            alert('사이트가 성공적으로 게시되었습니다! 1개월 무료 체험이 시작됩니다.');
             window.location.reload();
         }
     };
@@ -475,7 +475,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                     <p className="text-gray-600 mb-8 leading-relaxed">
                         현재 사이트는 <strong>비공개(Draft)</strong> 상태입니다.<br />
                         [사이트 게시하기] 버튼을 누르면 즉시 공개되며,<br />
-                        <span className="text-blue-600 font-bold">5시간 무료 체험</span>이 시작됩니다.
+                        <span className="text-blue-600 font-bold">1개월 무료 체험</span>이 시작됩니다.
                     </p>
 
                     <div className="bg-blue-50 p-6 rounded-2xl mb-8 text-left">
@@ -494,7 +494,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                             onClick={handlePublish}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5"
                         >
-                            사이트 게시하기 (5시간 시작 🚀)
+                            사이트 게시하기 (1개월 시작 🚀)
                         </button>
                         <Link href={`/build?edit=${id}`} className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-xl hover:bg-gray-50 transition">
                             내용 다시 수정하기
