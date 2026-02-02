@@ -549,6 +549,17 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                             {couponMessage && <p className={`text-sm ${isCouponApplied ? 'text-green-600 font-medium' : 'text-red-500'}`}>{couponMessage}</p>}
                         </div>
 
+                        {/* Refund Policy Notice */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 text-left">
+                            <h5 className="font-bold text-gray-800 flex items-center gap-2 text-sm mb-2">
+                                <AlertTriangle size={14} className="text-gray-500" /> 환불 정책 안내
+                            </h5>
+                            <ul className="text-xs text-gray-600 space-y-1 ml-1 list-disc list-inside">
+                                <li>결제일로부터 13일 이내: <span className="font-bold text-blue-600">100% 무상 환불</span></li>
+                                <li>결제일로부터 13일 이후: <span className="font-bold text-red-500">환불 불가</span></li>
+                            </ul>
+                        </div>
+
                         <div className="border-t border-gray-100 pt-6 mb-8">
                             <div className="flex justify-between text-gray-500 mb-2">
                                 <span>상품 금액</span>

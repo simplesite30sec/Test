@@ -25,6 +25,55 @@ type ReviewItem = {
     date?: string;
 };
 
+// Accordion Component (Moved outside to prevent re-renders)
+const AccordionSection = ({
+    title,
+    icon: Icon,
+    children,
+    isOpen,
+    onToggle,
+    isOptional = false,
+    subtitle = ''
+}: {
+    title: string,
+    icon: React.ElementType,
+    children: React.ReactNode,
+    isOpen: boolean,
+    onToggle: () => void,
+    isOptional?: boolean,
+    subtitle?: string
+}) => (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isOpen ? 'ring-2 ring-blue-100' : ''}`}>
+        <button
+            type="button"
+            onClick={onToggle}
+            className={`w-full flex items-center justify-between p-5 text-left transition-colors ${isOpen ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
+        >
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                    <Icon size={20} />
+                </div>
+                <div>
+                    <h2 className={`font-bold text-lg flex items-center gap-2 ${isOpen ? 'text-blue-900' : 'text-gray-700'}`}>
+                        {title}
+                        {isOptional && <span className="text-xs font-normal bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">선택 사항</span>}
+                    </h2>
+                    {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+                </div>
+            </div>
+            <div className="flex items-center gap-3">
+                {isOpen ? <ChevronUp size={20} className="text-blue-500" /> : <ChevronDown size={20} className="text-gray-400" />}
+            </div>
+        </button>
+
+        {isOpen && (
+            <div className="p-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
+                {children}
+            </div>
+        )}
+    </div>
+);
+
 function HomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -60,54 +109,7 @@ function HomeContent() {
 
 
 
-    // Accordion Component (Internal)
-    const AccordionSection = ({
-        title,
-        icon: Icon,
-        children,
-        isOpen,
-        onToggle,
-        isOptional = false,
-        subtitle = ''
-    }: {
-        title: string,
-        icon: React.ElementType,
-        children: React.ReactNode,
-        isOpen: boolean,
-        onToggle: () => void,
-        isOptional?: boolean,
-        subtitle?: string
-    }) => (
-        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isOpen ? 'ring-2 ring-blue-100' : ''}`}>
-            <button
-                type="button"
-                onClick={onToggle}
-                className={`w-full flex items-center justify-between p-5 text-left transition-colors ${isOpen ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
-            >
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                        <Icon size={20} />
-                    </div>
-                    <div>
-                        <h2 className={`font-bold text-lg flex items-center gap-2 ${isOpen ? 'text-blue-900' : 'text-gray-700'}`}>
-                            {title}
-                            {isOptional && <span className="text-xs font-normal bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">선택 사항</span>}
-                        </h2>
-                        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {isOpen ? <ChevronUp size={20} className="text-blue-500" /> : <ChevronDown size={20} className="text-gray-400" />}
-                </div>
-            </button>
 
-            {isOpen && (
-                <div className="p-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
-                    {children}
-                </div>
-            )}
-        </div>
-    );
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -617,7 +619,7 @@ function HomeContent() {
                             </div>
                             <div>
                                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">배경 투명도 ({formData.heroOpacity}%)</label>
-                                <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2" value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
+                                <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2" style={{ touchAction: 'none' }} value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
                             </div>
                         </div>
                         <div className="mb-6">

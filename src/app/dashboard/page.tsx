@@ -955,6 +955,17 @@ export default function DashboardPage() {
                                     </div>
                                 )}
 
+                                {/* Refund Policy Notice */}
+                                <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h5 className="font-bold text-gray-800 flex items-center gap-2 text-sm mb-2">
+                                        <AlertCircle size={14} className="text-gray-500" /> 환불 정책 안내
+                                    </h5>
+                                    <ul className="text-xs text-gray-600 space-y-1 ml-1 list-disc list-inside">
+                                        <li>결제일로부터 13일 이내: <span className="font-bold text-blue-600">100% 무상 환불</span></li>
+                                        <li>결제일로부터 13일 이후: <span className="font-bold text-red-500">환불 불가</span></li>
+                                    </ul>
+                                </div>
+
                                 {/* Action Buttons */}
                                 <div className="flex gap-3">
                                     <button

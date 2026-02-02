@@ -97,8 +97,34 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="bg-gray-50 py-12 text-center text-sm text-gray-400">
-        &copy; 2026 SimpleSite. All rights reserved.
+      <footer className="bg-gray-50 py-12 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 text-sm text-gray-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <h5 className="font-bold text-gray-900 mb-4">SimpleSite</h5>
+              <p className="mb-4">누구나 쉽고 빠르게 만드는<br />나만의 비즈니스 홈페이지</p>
+            </div>
+            <div className="md:text-right">
+              <div className="flex flex-col md:items-end gap-2">
+                <Link href="/terms" className="hover:text-gray-900 transition">이용약관</Link>
+                <Link href="/privacy" className="hover:text-gray-900 font-bold transition">개인정보처리방침</Link>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p><span className="font-bold">상호명:</span> 아이엠인터네셔널 | <span className="font-bold">대표자:</span> 서인명</p>
+                <p><span className="font-bold">사업자등록번호:</span> 794-05-02369 | <span className="font-bold">통신판매업신고번호:</span> 2022-경기시흥-2304</p>
+                <p><span className="font-bold">주소:</span> 경기도 시흥시 능곡서로27 403동 302호</p>
+                <p><span className="font-bold">고객센터:</span> 010-2216-9054 | inmyeong320@naver.com</p>
+              </div>
+              <div className="md:text-right flex items-end justify-start md:justify-end">
+                <p>&copy; 2026 SimpleSite. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
