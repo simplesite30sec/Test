@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        const config = addon.config || {};
-        const notificationEmail = (config as any).notification_email || (config as any).notificationEmail;
+        const config = (addon.config || {}) as { notification_email?: string; notificationEmail?: string };
+        const notificationEmail = config.notification_email || config.notificationEmail;
 
         if (!notificationEmail) {
             console.log('Skipping email: No notification email configured in addon config:', config);
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        const siteName = (addon.sites as any)?.name || 'Unknown Site';
+        const siteName = (addon.sites as { name?: string } | null)?.name || 'Unknown Site';
 
         console.log(`Attempting to send inquiry email to: ${notificationEmail} for site: ${siteName}`);
 
