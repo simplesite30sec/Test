@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, MousePointerClick, Palette, Phone, MapPin, FileText, Image as ImageIcon, Sliders, Plus, Trash2, Globe, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Building2, Palette, Image as ImageIcon, Sliders, Plus, Trash2, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -71,7 +71,7 @@ function HomeContent() {
         subtitle = ''
     }: {
         title: string,
-        icon: any,
+        icon: React.ElementType,
         children: React.ReactNode,
         isOpen: boolean,
         onToggle: () => void,
@@ -880,7 +880,7 @@ function HomeContent() {
                                 </div>
                             ))}
                             <div className="mt-2 text-[11px] text-blue-600 bg-blue-50 p-2 rounded">
-                                * 'Q&A'와 '문의하기'는 애드온 구매 후 표시됩니다.
+                                * &apos;Q&A&apos;와 &apos;문의하기&apos;는 애드온 구매 후 표시됩니다.
                             </div>
                         </div>
 
