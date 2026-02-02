@@ -203,6 +203,7 @@ function HomeContent() {
     };
 
     const [isPaid, setIsPaid] = useState(false);
+    const [heroHeight, setHeroHeight] = useState<'full' | 'medium' | 'small'>('full');
 
     // Load Data
     useEffect(() => {
@@ -229,6 +230,7 @@ function HomeContent() {
                     if (siteData.section_order) setSectionOrder(siteData.section_order as string[]);
                     if (siteData.section_titles) setSectionTitles(siteData.section_titles as typeof sectionTitles);
                     if (siteData.font_family) setFontFamily(siteData.font_family);
+                    if (siteData.hero_height) setHeroHeight(siteData.hero_height as any);
 
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
@@ -462,7 +464,8 @@ function HomeContent() {
                 portfolio: portfolioWithImages,
                 section_order: sectionOrder,
                 section_titles: sectionTitles,
-                font_family: fontFamily
+                font_family: fontFamily,
+                hero_height: heroHeight
             };
 
             try {
@@ -668,6 +671,23 @@ function HomeContent() {
                             <div>
                                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">배경 투명도 ({formData.heroOpacity}%)</label>
                                 <input type="range" name="heroOpacity" min="0" max="100" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2" style={{ touchAction: 'none' }} value={formData.heroOpacity} onChange={(e) => setFormData(prev => ({ ...prev, heroOpacity: Number(e.target.value) }))} />
+                            </div>
+                        </div>
+                        <div className="mb-6">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                                <ArrowUp size={16} /> 배경 이미지 높이
+                            </label>
+                            <div className="flex gap-2">
+                                {['full', 'medium', 'small'].map(h => (
+                                    <button
+                                        type="button"
+                                        key={h}
+                                        onClick={() => setHeroHeight(h as any)}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${heroHeight === h ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                                    >
+                                        {h === 'full' ? '전체 (100%)' : h === 'medium' ? '중간 (75%)' : '작게 (50%)'}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                         <div className="mb-6">

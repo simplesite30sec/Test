@@ -35,6 +35,7 @@ type SiteData = {
     };
     font_family?: string;
     slug?: string;
+    hero_height?: 'full' | 'medium' | 'small';
 };
 
 type SiteViewerProps = {
@@ -396,6 +397,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         social_links = {},
         reviews = [],
         portfolio = [],
+        hero_height = 'full',
     } = data;
 
     // Helper to convert hex to rgba
@@ -659,8 +661,9 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                     const renderSection = (section: string) => {
                         switch (section) {
                             case 'hero':
+                                const heroHeightClass = hero_height === 'small' ? 'min-h-[50vh]' : hero_height === 'medium' ? 'min-h-[75vh]' : 'min-h-screen';
                                 return (
-                                    <section key="hero" className="relative h-[90vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden" style={sectionStyle}>
+                                    <section key="hero" className={`relative flex flex-col items-center justify-center text-center px-6 overflow-hidden ${heroHeightClass}`} style={sectionStyle}>
                                         {hero_image_url && (
                                             <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: `url(${hero_image_url})` }} />
                                         )}
