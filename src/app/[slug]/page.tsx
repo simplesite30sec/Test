@@ -46,7 +46,7 @@ export default async function SlugPage({ params }: Props) {
     // Find site ID by slug
     const { data: site, error } = await supabase
         .from('sites')
-        .select('id, status')
+        .select('*')
         .eq('slug', slug)
         .single();
 
@@ -55,8 +55,14 @@ export default async function SlugPage({ params }: Props) {
     }
 
     // Pass to SiteViewer (Client Component)
-    // Note: SiteViewer checks ownership/status internally, but we can do a quick check here too?
-    // Usually SiteViewer handles proper "Draft/Private" screens.
-
-    return <SiteViewer id={site.id} initialData={null} />;
+    // Cast site to any to match SiteData if types slightly mismatch (e.g. optional fields)
+    // or just pass it. Supabase returns types matching DB.
+    return (
+        <SiteViewer
+            id={site.id}
+            initialData={site}
+            expiresAt={site.expires_at}
+            isPaid={site.is_paid}
+        />
+    );
 }
