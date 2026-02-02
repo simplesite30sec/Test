@@ -276,7 +276,47 @@ export default function DashboardPage() {
         }
     };
 
+    // PortOne Payment for Site Subscription
+    const handleSitePayment = async (siteId: string, siteName: string) => {
+        const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-c539d171-6af5-4238-be7d-9aea0279ae15";
+        const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-9355d9b2-e369-4737-9f64-1623f95ae009";
 
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const PortOne = (window as any).PortOne;
+            if (!PortOne) {
+                alert("결제 SDK를 로드하고 있습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            const paymentId = `PAY-SITE-${siteId}-${Date.now()}`;
+            const response = await PortOne.requestPayment({
+                storeId: storeId,
+                channelKey: channelKey,
+                paymentId: paymentId,
+                orderName: `라이트 사이트 1년권: ${siteName || '나의 홈페이지'}`,
+                totalAmount: 9900,
+                currency: "CURRENCY_KRW",
+                payMethod: "EASY_PAY",
+                customer: {
+                    fullName: user?.email?.split('@')[0] || "고객",
+                    email: user?.email || "customer@example.com",
+                },
+                redirectUrl: `${window.location.origin}/payment/success?id=${siteId}`
+            });
+
+            if (response) {
+                if (response.code != null) {
+                    alert(`결제 실패: ${response.message}`);
+                } else {
+                    window.location.href = `/payment/success?id=${siteId}&paymentId=${response.paymentId || paymentId}`;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("결제 요청 중 오류가 발생했습니다.");
+        }
+    };
 
 
     const isAdmin = user?.email === 'inmyeong320@naver.com';
@@ -683,15 +723,24 @@ export default function DashboardPage() {
 
                                     {site.is_paid && site.expires_at ? (
                                         <div className="flex items-center gap-2 text-sm text-blue-600 font-medium mb-6 bg-blue-50 p-3 rounded-lg">
-                                            <Clock size={16} />
-                                            <span>만료일: {new Date(site.expires_at).toLocaleDateString()}</span>
+                                            <CheckCircle size={16} />
+                                            <span>정식 사용 중 (기한: {new Date(site.expires_at).toLocaleDateString()})</span>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-6 bg-gray-50 p-3 rounded-lg">
-                                            <AlertCircle size={16} />
-                                            <span>
-                                                {site.is_paid ? '👑 프리미엄' : '🎁 무료 체험'} | {formatTimeRemaining(site.expires_at, site.is_paid)}
-                                            </span>
+                                        <div className="flex flex-col gap-3 mb-6 bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                            <div className="flex items-center justify-between text-xs text-orange-700 font-bold">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock size={14} />
+                                                    <span>무료 체험 기간</span>
+                                                </div>
+                                                <span className="bg-white px-2 py-0.5 rounded-full shadow-sm">{formatTimeRemaining(site.expires_at, false)}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleSitePayment(site.id, site.name)}
+                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
+                                            >
+                                                👑 지금 결제하고 1년 소장하기
+                                            </button>
                                         </div>
                                     )}
 

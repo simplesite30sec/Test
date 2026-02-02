@@ -418,7 +418,25 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         : { backgroundColor: hexToRgba(color, overlayOpacity) };
 
     const handlePublish = async () => {
-        if (!confirm('사이트를 게시하시겠습니까?\n게시 후 1개월 동안 무료 체험이 시작됩니다.')) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if user already used their free trial
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('has_used_trial')
+            .eq('id', user.id)
+            .single();
+
+        const canUseTrial = !profile?.has_used_trial;
+
+        if (canUseTrial) {
+            if (!confirm('사이트를 게시하시겠습니까?\n게시 후 1개월 동안 무료 체험이 시작됩니다.')) return;
+        } else {
+            if (!confirm('이미 무료 체험을 사용하셨습니다. 사이트를 게시하려면 결제가 필요합니다.\n지금 결제하시겠습니까?')) return;
+            handlePayment(); // Open payment modal
+            return;
+        }
 
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -434,6 +452,8 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         if (error) {
             alert('게시 실패: ' + error.message);
         } else {
+            // Mark trial as used
+            await supabase.from('profiles').upsert({ id: user.id, has_used_trial: true });
             alert('사이트가 성공적으로 게시되었습니다! 1개월 무료 체험이 시작됩니다.');
             window.location.reload();
         }

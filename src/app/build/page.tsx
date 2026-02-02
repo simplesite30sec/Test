@@ -469,6 +469,33 @@ function HomeContent() {
             };
 
             try {
+                // 1. Slug Validation (Check if slug is already taken by another site)
+                const { data: existingSite } = await supabase
+                    .from('sites')
+                    .select('id')
+                    .eq('slug', finalSlug)
+                    .neq('id', editId || '00000000-0000-0000-0000-000000000000') // Exclude current site if editing
+                    .single();
+
+                if (existingSite) {
+                    alert('이미 사용 중인 주소입니다. 다른 주소를 입력해주세요.');
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Trial Abuse Prevention (Check if user already used their free trial)
+                let canUseTrial = true;
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('has_used_trial')
+                    .eq('id', user?.id)
+                    .single();
+
+                if (profile?.has_used_trial && !editId) {
+                    // If user has used trial and is creating a NEW site
+                    canUseTrial = false;
+                }
+
                 let resultId = editId;
                 if (editId) {
                     const { error } = await supabase.from('sites').update(siteData).eq('id', editId);
@@ -490,12 +517,17 @@ function HomeContent() {
                     const newSiteData = {
                         ...siteData,
                         user_id: user?.id,
-                        expires_at: expiresAt,
+                        expires_at: canUseTrial ? expiresAt : new Date(0).toISOString(), // Set to epoch if not eligible
                         is_paid: false,
                     };
                     const { data, error } = await supabase.from('sites').insert([newSiteData]).select().single();
                     if (error) throw error;
                     resultId = data.id;
+
+                    // If it was a first trial, mark it as used in profile
+                    if (canUseTrial) {
+                        await supabase.from('profiles').upsert({ id: user?.id, has_used_trial: true });
+                    }
                 }
 
                 // Open in new window if editing, otherwise navigate
