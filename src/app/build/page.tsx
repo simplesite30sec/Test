@@ -612,7 +612,7 @@ function HomeContent() {
                             </label>
                             <div className="flex items-center">
                                 <span className="bg-gray-100 text-gray-500 px-3 py-3 rounded-l-lg border border-r-0 text-sm">
-                                    https://.../
+                                    https://30site.com/
                                 </span>
                                 <input
                                     type="text"
@@ -624,7 +624,7 @@ function HomeContent() {
                                 />
                             </div>
                             <p className="text-xs text-gray-400 mt-1">
-                                * 설정하면 <b>https://.../site/설정값</b> 주소로 접속할 수 있습니다. (비워두면 자동 ID 사용)
+                                * 설정하면 <b>https://30site.com/설정값</b> 주소로 접속할 수 있습니다. (비워두면 자동 ID 사용)
                             </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
