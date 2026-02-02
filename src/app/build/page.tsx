@@ -441,8 +441,11 @@ function HomeContent() {
             // Calculate expiration time (5 hours from now)
             const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
 
+            // Auto-generate slug if empty
+            const finalSlug = formData.slug?.trim() || Math.random().toString(36).substring(2, 10);
+
             const siteData = {
-                slug: formData.slug || null,
+                slug: finalSlug,
                 name: formData.name,
                 slogan: formData.slogan,
                 description: formData.description,
