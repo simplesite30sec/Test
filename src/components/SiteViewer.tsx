@@ -20,7 +20,6 @@ import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import X from 'lucide-react/dist/esm/icons/x';
 import Mail from 'lucide-react/dist/esm/icons/mail';
 import Construction from 'lucide-react/dist/esm/icons/construction';
-import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import QnABoard from './addons/QnABoard';
 
 type SiteData = {
