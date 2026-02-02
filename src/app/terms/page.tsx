@@ -6,13 +6,13 @@ export default function TermsPage() {
 
                 <section className="mb-8">
                     <h2 className="text-xl font-bold mb-4">제 1 조 (목적)</h2>
-                    <p>본 약관은 아이엠인터네셔널(이하 "회사")이 제공하는 SimpleSite 서비스(이하 "서비스")의 이용조건 및 절차, 이용자와 회사의 권리, 의무, 책임사항을 규정함을 목적으로 합니다.</p>
+                    <p>본 약관은 아이엠인터네셔널(이하 &quot;회사&quot;)이 제공하는 SimpleSite 서비스(이하 &quot;서비스&quot;)의 이용조건 및 절차, 이용자와 회사의 권리, 의무, 책임사항을 규정함을 목적으로 합니다.</p>
                 </section>
 
                 <section className="mb-8">
                     <h2 className="text-xl font-bold mb-4">제 2 조 (용어의 정의)</h2>
-                    <p>1. "서비스"란 회사가 제공하는 웹사이트 제작 및 호스팅 플랫폼을 의미합니다.</p>
-                    <p>2. "이용자"란 본 약관에 따라 회사가 제공하는 서비스를 받는 회원을 말합니다.</p>
+                    <p>1. &quot;서비스&quot;란 회사가 제공하는 웹사이트 제작 및 호스팅 플랫폼을 의미합니다.</p>
+                    <p>2. &quot;이용자&quot;란 본 약관에 따라 회사가 제공하는 서비스를 받는 회원을 말합니다.</p>
                 </section>
 
                 <section className="mb-8">
