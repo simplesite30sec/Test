@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, CheckCircle, XCircle, CreditCard, Loader2, Clock, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
@@ -9,14 +9,11 @@ export default function DomainManager({ siteId }: { siteId: string }) {
     const [isSearching, setIsSearching] = useState(false);
     const [result, setResult] = useState<{ available: boolean; domain: string } | null>(null);
     const [requesting, setRequesting] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [currentAddon, setCurrentAddon] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadStatus();
-    }, [siteId]);
-
-    const loadStatus = async () => {
+    const loadStatus = useCallback(async () => {
         const { data } = await supabase
             .from('site_addons')
             .select('*')
@@ -25,7 +22,11 @@ export default function DomainManager({ siteId }: { siteId: string }) {
             .single();
         setCurrentAddon(data);
         setLoading(false);
-    };
+    }, [siteId]);
+
+    useEffect(() => {
+        loadStatus();
+    }, [loadStatus]);
 
     const checkDomain = async () => {
         if (!domain) return;

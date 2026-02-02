@@ -6,25 +6,26 @@ import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
     const [isAdmin, setIsAdmin] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
+        const checkAdmin = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            // Check for specific admin email
+            if (user?.email !== 'inmyeong320@naver.com') {
+                alert('관리자만 접근 가능합니다.');
+                router.push('/');
+            } else {
+                setIsAdmin(true);
+                fetchRequests();
+            }
+        };
         checkAdmin();
-    }, []);
-
-    const checkAdmin = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        // Check for specific admin email
-        if (user?.email !== 'inmyeong320@naver.com') {
-            alert('관리자만 접근 가능합니다.');
-            router.push('/');
-        } else {
-            setIsAdmin(true);
-            fetchRequests();
-        }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [router]);
 
     const fetchRequests = async () => {
         // Fetch domain addons + site info
@@ -112,9 +113,9 @@ export default function AdminPage() {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${req.config?.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                req.config?.status === 'pending_payment' ? 'bg-yellow-100 text-yellow-700' :
-                                                    req.config?.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                        'bg-gray-100 text-gray-600'
+                                            req.config?.status === 'pending_payment' ? 'bg-yellow-100 text-yellow-700' :
+                                                req.config?.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                    'bg-gray-100 text-gray-600'
                                             }`}>
                                             {req.config?.status === 'pending_payment' ? '⏳ 신청 접수' :
                                                 req.config?.status === 'active' ? '✅ 연결 완료' :
@@ -162,7 +163,7 @@ export default function AdminPage() {
                     </table>
                 </div>
                 <p className="mt-4 text-xs text-gray-400 text-center">
-                    * '연결 완료 처리'를 누르면 사용자 대시보드에서도 '연결 완료'로 표시됩니다. 실제로 도메인 연결 설정 후 눌러주세요.
+                    * &apos;연결 완료 처리&apos;를 누르면 사용자 대시보드에서도 &apos;연결 완료&apos;로 표시됩니다. 실제로 도메인 연결 설정 후 눌러주세요.
                 </p>
             </div>
         </div>

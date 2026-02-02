@@ -1,20 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 
 export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [requests, setRequests] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isOpen, setIsOpen] = useState(false);
 
-    useEffect(() => {
-        if (userEmail === 'inmyeong320@naver.com') {
-            fetchRequests();
-        }
-    }, [userEmail]);
-
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         const { data, error } = await supabase
             .from('site_addons')
             .select(`
@@ -30,8 +24,13 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
         if (!error) {
             setRequests(data || []);
         }
-        setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        if (userEmail === 'inmyeong320@naver.com') {
+            fetchRequests();
+        }
+    }, [userEmail, fetchRequests]);
 
     const updateStatus = async (id: string, newStatus: string) => {
         if (!confirm(`상태를 '${newStatus}'로 변경하시겠습니까?`)) return;

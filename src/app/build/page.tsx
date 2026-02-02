@@ -230,7 +230,7 @@ function HomeContent() {
                     if (siteData.section_order) setSectionOrder(siteData.section_order as string[]);
                     if (siteData.section_titles) setSectionTitles(siteData.section_titles as typeof sectionTitles);
                     if (siteData.font_family) setFontFamily(siteData.font_family);
-                    if (siteData.hero_height) setHeroHeight(siteData.hero_height as any);
+                    if (siteData.hero_height) setHeroHeight(siteData.hero_height as 'full' | 'medium' | 'small');
 
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
@@ -682,7 +682,7 @@ function HomeContent() {
                                     <button
                                         type="button"
                                         key={h}
-                                        onClick={() => setHeroHeight(h as any)}
+                                        onClick={() => setHeroHeight(h as 'full' | 'medium' | 'small')}
                                         className={`flex-1 py-2 rounded-lg text-sm font-bold border transition ${heroHeight === h ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {h === 'full' ? '전체 (100%)' : h === 'medium' ? '중간 (75%)' : '작게 (50%)'}
