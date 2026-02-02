@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
 import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X, Mail, Construction } from 'lucide-react';
 import QnABoard from './addons/QnABoard';
-import InquiryForm from './addons/InquiryForm';
 
 type SiteData = {
     name: string;
@@ -748,8 +747,6 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                 ) : null;
                             case 'qna':
                                 return activeAddons.includes('qna') ? <QnABoard key="qna" siteId={id} canManage={canManage} /> : null;
-                            case 'inquiry':
-                                return activeAddons.includes('inquiry') ? <InquiryForm key="inquiry" siteId={id} /> : null;
                             case 'contact':
                                 return (
                                     <section key="contact" id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">
