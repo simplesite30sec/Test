@@ -2,6 +2,8 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { createClient } from '@/utils/supabase/client';
 import SiteViewer from '@/components/SiteViewer';
 
+export const runtime = 'edge';
+
 type Props = {
     searchParams: { [key: string]: string | string[] | undefined }
 }
