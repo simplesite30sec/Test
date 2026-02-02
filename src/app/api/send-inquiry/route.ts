@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+export const runtime = 'edge';
+
 export async function POST(request: NextRequest) {
     try {
         const { siteId, name, contact, message, senderEmail } = await request.json();
