@@ -34,6 +34,7 @@ type SiteData = {
         qna?: string;
     };
     font_family?: string;
+    slug?: string;
 };
 
 type SiteViewerProps = {

@@ -18,6 +18,7 @@ type Site = {
     hero_image_url: string;
     created_at: string;
     user_id: string;
+    slug?: string;
 };
 
 type Payment = {
@@ -564,7 +565,7 @@ export default function DashboardPage() {
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center gap-2 text-blue-500 font-medium">
                                                                         <Eye size={12} />
-                                                                        <a href={`/site?id=${site.id}`} target="_blank" rel="noreferrer" className="hover:underline">
+                                                                        <a href={site.slug ? `/${site.slug}` : `/site?id=${site.id}`} target="_blank" rel="noreferrer" className="hover:underline">
                                                                             사이트 보기
                                                                         </a>
                                                                     </div>
@@ -712,7 +713,7 @@ export default function DashboardPage() {
                                     )}
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        <Link href={`/site?id=${site.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
+                                        <Link href={site.slug ? `/${site.slug}` : `/site?id=${site.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">
                                             <Eye size={16} /> 보기
                                         </Link>
                                         <Link href={`/build?edit=${site.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-bold transition">

@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, Palette, Image as ImageIcon, Sliders, Plus, Trash2, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Building2, Palette, Image as ImageIcon, Sliders, Plus, Trash2, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2, Globe } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -141,6 +141,7 @@ function HomeContent() {
         googleMap: '',
         phone2: '',
         phone3: '',
+        slug: '',
     });
     const [heroImage, setHeroImage] = useState<File | null>(null);
     const [heroImageUrl, setHeroImageUrl] = useState<string>('');
@@ -245,6 +246,7 @@ function HomeContent() {
                         naverMap: siteData.map_links?.naver || '',
                         kakaoMap: siteData.map_links?.kakao || '',
                         googleMap: siteData.google_map || '',
+                        slug: siteData.slug || '',
                     });
                     setHeroImageUrl(siteData.hero_image_url || '');
                     setLogoUrl(siteData.logo_url || '');
@@ -440,6 +442,7 @@ function HomeContent() {
             const expiresAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
 
             const siteData = {
+                slug: formData.slug || null,
                 name: formData.name,
                 slogan: formData.slogan,
                 description: formData.description,
@@ -601,6 +604,27 @@ function HomeContent() {
                         onToggle={() => toggleSection('basic')}
                         subtitle="업체명, 슬로건 등 기본적인 정보를 입력합니다."
                     >
+                        <div className="mb-4">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                <Globe size={16} /> 사이트 주소 설정 (선택 사항)
+                            </label>
+                            <div className="flex items-center">
+                                <span className="bg-gray-100 text-gray-500 px-3 py-3 rounded-l-lg border border-r-0 text-sm">
+                                    https://.../
+                                </span>
+                                <input
+                                    type="text"
+                                    name="slug"
+                                    placeholder="haru (영문 소문자, 숫자, 하이픈만 가능)"
+                                    className="w-full px-4 py-3 rounded-r-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white shadow-sm"
+                                    value={formData.slug}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                                * 설정하면 <b>https://.../site/설정값</b> 주소로 접속할 수 있습니다. (비워두면 자동 ID 사용)
+                            </p>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">업체명</label>
