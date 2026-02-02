@@ -181,7 +181,13 @@ function HomeContent() {
         { value: 'Roboto', label: 'Roboto' },
         { value: 'Open Sans', label: 'Open Sans' },
         { value: 'Montserrat', label: 'Montserrat' },
+        { value: 'Gowun Dodum', label: '고운돋움' },
+        { value: 'Gowun Batang', label: '고운바탕' },
     ];
+
+    // Construct Google Fonts URL
+    const fontNames = FONT_OPTIONS.filter(f => f.value !== 'Inter').map(f => f.value.replace(/ /g, '+'));
+    const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${fontNames.join(':wght@400;700&family=')}:wght@400;700&display=swap`;
 
     // Section Order State
     const [sectionOrder, setSectionOrder] = useState<string[]>(['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact']);
@@ -535,7 +541,17 @@ function HomeContent() {
 
     return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10 flex flex-col gap-8 p-8">
+            {/* Load Google Fonts for Preview */}
+            <link rel="stylesheet" href={googleFontsUrl} />
+
+            {/* Force Font Application to Inputs */}
+            <style jsx global>{`
+                input, textarea, select, button {
+                    font-family: '${fontFamily}', sans-serif !important;
+                }
+            `}</style>
+
+            <form onSubmit={handleSubmit} className="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden my-10 flex flex-col gap-8 p-8" style={{ fontFamily: fontFamily }}>
                 <div className="bg-blue-600 p-8 text-white rounded-t-2xl -mt-8 -mx-8 mb-8 shadow-lg">
                     <div className="flex justify-between items-start">
                         <div>
@@ -957,9 +973,16 @@ function HomeContent() {
                             value={fontFamily}
                             onChange={(e) => setFontFamily(e.target.value)}
                             className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                            style={{ fontFamily: fontFamily }}
                         >
                             {FONT_OPTIONS.map(font => (
-                                <option key={font.value} value={font.value}>{font.label}</option>
+                                <option
+                                    key={font.value}
+                                    value={font.value}
+                                    style={{ fontFamily: font.value }}
+                                >
+                                    {font.label} (abc가나다)
+                                </option>
                             ))}
                         </select>
                     </AccordionSection>
