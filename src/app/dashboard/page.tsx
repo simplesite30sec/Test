@@ -7,6 +7,7 @@ import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter, ShoppingBag, X, CheckCircle } from 'lucide-react';
 import DomainManager from '@/components/addons/DomainManager';
+import AdminDashboard from '@/components/AdminDashboard';
 
 type Site = {
     id: string;
@@ -447,6 +448,9 @@ export default function DashboardPage() {
                 {/* Admin Dashboard */}
                 {isAdmin && (
                     <div className="space-y-10 mb-20 animate-fadeIn">
+                        {/* Domain Admin */}
+                        <AdminDashboard userEmail={user?.email} />
+
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
