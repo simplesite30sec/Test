@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Edit, Eye, Pause, Play, Trash2, Clock, Globe, Plus, AlertCircle, Calendar, DollarSign, TrendingUp, Users, ChevronDown, ChevronRight, Filter, ShoppingBag, X, CheckCircle } from 'lucide-react';
+import DomainManager from '@/components/addons/DomainManager';
 
 type Site = {
     id: string;
@@ -58,9 +59,8 @@ export default function DashboardPage() {
     const [couponValid, setCouponValid] = useState(false);
 
     const availableAddons = [
-        { id: 'inquiry', name: '1:1 문의하기 폼', price: 3000, desc: '고객의 문의를 바로 받아보세요.' },
         { id: 'qna', name: 'Q&A 게시판', price: 3000, desc: '비밀글 기능이 포함된 질문 게시판입니다.' },
-        // { id: 'domain', name: '개인 도메인 연결', price: 15000, desc: '나만의 도메인(com, kr)을 연결하세요.' }
+        { id: 'domain', name: '나만의 도메인 구매', price: 35000, desc: '.com / .net 등 도메인을 구매하고 연결합니다.' }
     ];
 
 
@@ -85,12 +85,7 @@ export default function DashboardPage() {
             });
             setPurchasedAddons(purchased);
 
-            const inquiryAddon = data.find(d => d.addon_type === 'inquiry');
-            if (inquiryAddon?.config?.notification_email) {
-                setNotificationEmail(inquiryAddon.config.notification_email);
-            } else {
-                setNotificationEmail(user?.email || '');
-            }
+            setPurchasedAddons(purchased);
         }
     };
 
@@ -131,12 +126,6 @@ export default function DashboardPage() {
         const site = sites.find(s => s.id === selectedSiteId) || allSites.find(s => s.id === selectedSiteId);
         if (!site) return;
 
-        // Validation for inquiry addon
-        if (addon.id === 'inquiry' && !notificationEmail) {
-            alert('알림 받을 이메일을 입력해주세요.');
-            return;
-        }
-
         // Check if already purchased
         if (purchasedAddons[addon.id]) {
             await handleToggleAddon(addon.id, false);
@@ -165,7 +154,7 @@ export default function DashboardPage() {
         const { error } = await supabase.from('site_addons').upsert({
             site_id: selectedSiteId,
             addon_type: addonId,
-            config: addonId === 'inquiry' ? { notification_email: notificationEmail } : {},
+            config: {},
             is_active: true,
             is_purchased: false // Free trial
         }, { onConflict: 'site_id,addon_type' });
@@ -248,7 +237,7 @@ export default function DashboardPage() {
             const { error } = await supabase.from('site_addons').upsert({
                 site_id: selectedSiteId,
                 addon_type: selectedAddon.id,
-                config: selectedAddon.id === 'inquiry' ? { notification_email: notificationEmail } : {},
+                config: {},
                 is_active: true,
                 is_purchased: true,
                 purchase_type: paymentMethod,
@@ -843,17 +832,10 @@ export default function DashboardPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Email Input for Inquiry (only show when installed or adding) */}
-                                                {addon.id === 'inquiry' && (
-                                                    <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                        <label className="block text-[10px] font-bold text-gray-400 mb-1">알림 받을 이메일</label>
-                                                        <input
-                                                            type="email"
-                                                            placeholder="example@email.com"
-                                                            value={notificationEmail}
-                                                            onChange={(e) => setNotificationEmail(e.target.value)}
-                                                            className="w-full bg-transparent text-sm border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
-                                                        />
+                                                {/* Domain Manager Logic */}
+                                                {addon.id === 'domain' && !isInstalled && (
+                                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                                        <DomainManager siteId={selectedSiteId} />
                                                     </div>
                                                 )}
                                             </div>
