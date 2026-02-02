@@ -493,11 +493,13 @@ function HomeContent() {
                 }
 
                 // Open in new window if editing, otherwise navigate
+                const targetUrl = siteData.slug ? `/${siteData.slug}` : `/site?id=${resultId}`;
+
                 if (editId) {
-                    window.open(`/site?id=${resultId}&edit=true`, '_blank');
-                    alert('수정이 완료되었습니다! 새 창에서 확인해주세요.');
+                    window.open(targetUrl, '_blank');
+                    alert(`수정이 완료되었습니다! \n 주소: ${window.location.origin}${targetUrl}`);
                 } else {
-                    router.push(`/site?id=${resultId}`);
+                    router.push(targetUrl);
                 }
             } catch (dbError) {
                 console.error("DB Operation Failed, switching to Mock Mode", dbError);
