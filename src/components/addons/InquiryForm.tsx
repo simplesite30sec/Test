@@ -28,8 +28,9 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
         }
 
         // Send email notification (non-blocking)
+        // Send email notification (non-blocking)
         try {
-            await fetch('/api/send-inquiry', {
+            const res = await fetch('/api/send-inquiry', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -40,9 +41,23 @@ export default function InquiryForm({ siteId }: { siteId: string }) {
                     senderEmail: formData.email
                 })
             });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                console.error('Email failed:', errData);
+                // Alert the user only if needed, or stick to non-blocking?
+                // For debugging, we WANT to see the error.
+                alert(`이메일 전송 실패: ${errData.message || JSON.stringify(errData)}`);
+            } else {
+                const data = await res.json();
+                if (data.message && data.message.includes('No notification email')) {
+                    // This is technically success (no error), but no email sent.
+                    // Silent
+                }
+            }
         } catch (emailError) {
-            // Email failed, but inquiry was saved - don't block user
             console.error('Failed to send email notification:', emailError);
+            alert(`이메일 전송 오류: ${emailError}`);
         }
 
         setSending(false);
