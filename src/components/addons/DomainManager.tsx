@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, CheckCircle, XCircle, CreditCard, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, CheckCircle, XCircle, CreditCard, Loader2, Clock, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
 export default function DomainManager({ siteId }: { siteId: string }) {
@@ -9,6 +9,23 @@ export default function DomainManager({ siteId }: { siteId: string }) {
     const [isSearching, setIsSearching] = useState(false);
     const [result, setResult] = useState<{ available: boolean; domain: string } | null>(null);
     const [requesting, setRequesting] = useState(false);
+    const [currentAddon, setCurrentAddon] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadStatus();
+    }, [siteId]);
+
+    const loadStatus = async () => {
+        const { data } = await supabase
+            .from('site_addons')
+            .select('*')
+            .eq('site_id', siteId)
+            .eq('addon_type', 'domain')
+            .single();
+        setCurrentAddon(data);
+        setLoading(false);
+    };
 
     const checkDomain = async () => {
         if (!domain) return;
@@ -32,33 +49,58 @@ export default function DomainManager({ siteId }: { siteId: string }) {
     };
 
     const handleRequest = async () => {
-        if (!confirm(`${result?.domain} 도메인을 구매 신청하시겠습니까?\n비용: 35,000원 (1년)`)) return;
+        if (!confirm(`${result?.domain} 도메인을 구매 신청하시겠습니까?\n(⚠️ 구매 즉시 환불이 불가능합니다)`)) return;
 
         setRequesting(true);
 
-        // TODO: PortOne Payment Implementation Here
-        // For MVP, we save "Pending Payment" addon and alert user to wire transfer or mock payment.
-
-        const { error } = await supabase.from('site_addons').insert({
+        const { error } = await supabase.from('site_addons').upsert({
             site_id: siteId,
             addon_type: 'domain',
             is_active: false, // Pending admin approval/payment
             config: {
                 domain: result?.domain,
                 status: 'pending_payment',
-                price: 35000
+                price: 35000,
+                requested_at: new Date().toISOString()
             }
-        });
+        }, { onConflict: 'site_id, addon_type' });
 
         if (error) {
             alert('신청 실패: ' + error.message);
         } else {
-            alert('도메인 구매 신청이 접수되었습니다!\n관리자가 확인 후 연락드립니다.');
+            alert('도메인 구매 신청이 접수되었습니다!\n최대 24시간 이내에 연결됩니다.');
+            loadStatus();
             setResult(null);
             setDomain('');
         }
         setRequesting(false);
     };
+
+    if (loading) return <div className="p-6 text-center text-gray-400">Loading...</div>;
+
+    if (currentAddon) {
+        const config = currentAddon.config || {};
+        return (
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Search size={20} /> 도메인 연결 상태
+                </h3>
+                <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4">
+                    <Clock className="text-blue-600 mt-1 shrink-0" size={24} />
+                    <div>
+                        <h4 className="font-bold text-blue-900 text-lg mb-1">도메인 연결 진행 중입니다.</h4>
+                        <p className="text-blue-800 mb-3">
+                            신청 도메인: <b className="font-mono text-lg">{config.domain}</b>
+                        </p>
+                        <div className="bg-white/60 p-3 rounded-lg text-sm text-blue-700">
+                            <p>⏳ 최대 24시간 소요됩니다.</p>
+                            <p>관리자가 승인 및 연결 작업을 진행하고 있습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -107,10 +149,13 @@ export default function DomainManager({ siteId }: { siteId: string }) {
 
                     {result.available && (
                         <div className="mt-4 pt-4 border-t border-green-200">
-                            <div className="bg-white/50 p-3 rounded-lg text-xs text-green-800 mb-4">
-                                <strong>⚠️ 프리미엄 도메인 안내</strong><br />
-                                만약 선택하신 도메인이 &apos;프리미엄(고가)&apos; 도메인일 경우, <br />
-                                구매가 취소되거나 추가 비용이 발생할 수 있습니다.
+                            <div className="bg-white/50 p-3 rounded-lg text-xs text-green-800 mb-4 flex items-start gap-2">
+                                <ShieldAlert size={16} className="mt-0.5 shrink-0" />
+                                <div>
+                                    <strong>프리미엄(고가) 도메인 안내</strong><br />
+                                    만약 선택하신 도메인이 &apos;프리미엄&apos;일 경우, 구매가 자동 취소되고 전액 환불됩니다.<br />
+                                    (희귀 도메인은 가격이 상이하여 안전을 위해 자동 취소됩니다.)
+                                </div>
                             </div>
                             <button
                                 onClick={handleRequest}
@@ -124,10 +169,10 @@ export default function DomainManager({ siteId }: { siteId: string }) {
                 </div>
             )}
 
-            <p className="text-xs text-gray-400 mt-2">
-                * .com, .net, .co.kr 등 일반적인 도메인 구매가 가능합니다.<br />
-                * 구매 완료 후 사이트에 자동 연결됩니다.
-            </p>
+            <div className="text-xs text-gray-400 mt-2 space-y-1">
+                <p>* .com, .net, .co.kr 등 일반적인 도메인 구매가 가능합니다.</p>
+                <p>* 구매 완료 후 사이트에 자동 연결됩니다.</p>
+            </div>
         </div>
     );
 }
