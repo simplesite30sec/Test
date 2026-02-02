@@ -33,14 +33,24 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
     }, [userEmail, fetchRequests]);
 
     const updateStatus = async (id: string, newStatus: string) => {
-        if (!confirm(`상태를 '${newStatus}'로 변경하시겠습니까?`)) return;
+        let reason = '';
+        if (newStatus === 'cancelled') {
+            reason = prompt('거절/취소 사유를 입력해주세요(예: 도메인 형식 오류):') || '';
+            if (!reason) {
+                alert('사유를 입력해야 취소 처리가 가능합니다.');
+                return;
+            }
+        } else {
+            if (!confirm(`상태를 '${newStatus}'로 변경하시겠습니까?`)) return;
+        }
 
         const targetReq = requests.find(r => r.id === id);
         if (!targetReq) return;
 
         const updatedConfig = {
-            ...targetReq.config,
+            ...(targetReq.config || {}),
             status: newStatus,
+            reason: reason || targetReq.config?.reason || '',
             updated_at: new Date().toISOString()
         };
 
@@ -98,15 +108,25 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
                             ) : requests.map((req) => (
                                 <tr key={req.id} className="hover:bg-gray-50 transition">
                                     <td className="p-4">
-                                        <div className="font-bold text-gray-900">{req.config?.domain}</div>
+                                        <div className="font-bold text-gray-900">{req.config?.domain || 'Unknown Domain'}</div>
                                         <div className="text-xs text-gray-400">ID: {req.id.substring(0, 8)}...</div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${req.config?.status === 'active' ? 'bg-green-100 text-green-700' :
-                                            req.config?.status === 'pending_payment' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
-                                            }`}>
-                                            {req.config?.status}
-                                        </span>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${req.config?.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                req.config?.status === 'pending_payment' ? 'bg-yellow-100 text-yellow-700' :
+                                                    req.config?.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                {req.config?.status === 'active' ? '연결 완료' :
+                                                    req.config?.status === 'cancelled' ? '취소/거절됨' :
+                                                        req.config?.status === 'pending_payment' ? '신청/결제대기' : req.config?.status}
+                                            </span>
+                                            {req.config?.reason && (
+                                                <div className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 max-w-[120px] truncate" title={req.config.reason}>
+                                                    사유: {req.config.reason}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-4 text-xs text-gray-500">
                                         {new Date(req.config?.requested_at || req.created_at).toLocaleDateString()}

@@ -81,24 +81,63 @@ export default function DomainManager({ siteId }: { siteId: string }) {
 
     if (currentAddon) {
         const config = currentAddon.config || {};
+        const status = config.status || 'pending_payment';
+
         return (
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Search size={20} /> 도메인 연결 상태
                 </h3>
-                <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4">
-                    <Clock className="text-blue-600 mt-1 shrink-0" size={24} />
-                    <div>
-                        <h4 className="font-bold text-blue-900 text-lg mb-1">도메인 연결 진행 중입니다.</h4>
-                        <p className="text-blue-800 mb-3">
-                            신청 도메인: <b className="font-mono text-lg">{config.domain}</b>
-                        </p>
-                        <div className="bg-white/60 p-3 rounded-lg text-sm text-blue-700">
-                            <p>⏳ 최대 24시간 소요됩니다.</p>
-                            <p>관리자가 승인 및 연결 작업을 진행하고 있습니다.</p>
+
+                {status === 'active' ? (
+                    <div className="bg-green-50 border border-green-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                        <CheckCircle className="text-green-600 mt-1 shrink-0" size={24} />
+                        <div>
+                            <h4 className="font-bold text-green-900 text-lg mb-1">도메인 연결이 완료되었습니다!</h4>
+                            <p className="text-green-800 mb-3">
+                                연결 도메인: <a href={`https://${config.domain}`} target="_blank" rel="noopener noreferrer" className="font-mono text-lg underline">{config.domain}</a>
+                            </p>
+                            <p className="text-sm text-green-700 italic">이제 전 세계에서 해당 주소로 접속 가능합니다.</p>
                         </div>
                     </div>
-                </div>
+                ) : status === 'cancelled' ? (
+                    <div className="bg-red-50 border border-red-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                        <ShieldAlert className="text-red-600 mt-1 shrink-0" size={24} />
+                        <div>
+                            <h4 className="font-bold text-red-900 text-lg mb-1">도메인 연결이 거절/취소되었습니다.</h4>
+                            <div className="bg-white/60 p-4 rounded-lg border border-red-200 mb-4">
+                                <p className="text-sm font-bold text-red-800 mb-1">거절/취소 사유:</p>
+                                <p className="text-red-700">{config.reason || '사유가 입력되지 않았습니다.'}</p>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (confirm('요청 내역을 초기화하고 다시 신청하시겠습니까?')) {
+                                        const { error } = await supabase.from('site_addons').delete().eq('id', currentAddon.id);
+                                        if (error) alert('삭제 실패: ' + error.message);
+                                        else loadStatus();
+                                    }
+                                }}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition"
+                            >
+                                다시 신청하기
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                        <Clock className="text-blue-600 mt-1 shrink-0" size={24} />
+                        <div>
+                            <h4 className="font-bold text-blue-900 text-lg mb-1">도메인 연결 진행 중입니다.</h4>
+                            <p className="text-blue-800 mb-3">
+                                신청 도메인: <b className="font-mono text-lg">{config.domain}</b>
+                            </p>
+                            <div className="bg-white/60 p-3 rounded-lg text-sm text-blue-700">
+                                <p>⏳ 최대 24시간 소요됩니다.</p>
+                                <p>관리자가 승인 및 연결 작업을 진행하고 있습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
