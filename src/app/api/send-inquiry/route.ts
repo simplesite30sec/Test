@@ -31,16 +31,28 @@ export async function POST(request: NextRequest) {
             .eq('is_active', true)
             .single();
 
-        if (!addon || !addon.config?.notificationEmail) {
-            // No notification email configured, skip email sending
+        if (!addon) {
+            console.log('Skipping email: No active inquiry addon found for siteId:', siteId);
+            return NextResponse.json({
+                success: true,
+                message: 'No active inquiry addon found'
+            });
+        }
+
+        const config = addon.config || {};
+        const notificationEmail = (config as any).notification_email || (config as any).notificationEmail;
+
+        if (!notificationEmail) {
+            console.log('Skipping email: No notification email configured in addon config:', config);
             return NextResponse.json({
                 success: true,
                 message: 'No notification email configured'
             });
         }
 
-        const siteName = (addon.sites as { name?: string })?.name || 'Unknown Site';
-        const notificationEmail = addon.config.notificationEmail;
+        const siteName = (addon.sites as any)?.name || 'Unknown Site';
+
+        console.log(`Attempting to send inquiry email to: ${notificationEmail} for site: ${siteName}`);
 
         // Send email via Resend
         const { data, error } = await resend.emails.send({
