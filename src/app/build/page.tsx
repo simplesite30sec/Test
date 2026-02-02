@@ -626,6 +626,9 @@ function HomeContent() {
                             <p className="text-xs text-gray-400 mt-1">
                                 * 설정하면 <b>https://30site.com/설정값</b> 주소로 접속할 수 있습니다. (비워두면 자동 ID 사용)
                             </p>
+                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                                💡 나만의 도메인(.com 등) 구매 및 연결은 사이트 제작 완료 후 대시보드에서 가능합니다.
+                            </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
