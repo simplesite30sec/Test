@@ -1,11 +1,29 @@
 'use client';
 
 import { createClient } from '@/utils/supabase/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ExternalLink, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
+    const [isKakao, setIsKakao] = useState(false);
     const supabase = createClient();
+
+    useEffect(() => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const kakao = userAgent.includes('kakaotalk');
+        setIsKakao(kakao);
+
+        if (kakao) {
+            // Auto redirect to external browser for KakaoTalk
+            // This solves the 'disallowed_useragent' error for Google Login
+            const url = window.location.href;
+            if (!url.includes('openExternal=true')) {
+                const targetUrl = url.includes('?') ? `${url}&openExternal=true` : `${url}?openExternal=true`;
+                window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(targetUrl)}`;
+            }
+        }
+    }, []);
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -50,6 +68,27 @@ export default function LoginPage() {
                     </svg>
                     {loading ? '로그인 중...' : 'Google로 시작하기'}
                 </button>
+
+                {isKakao && (
+                    <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-2xl text-left">
+                        <p className="text-orange-800 text-sm font-bold flex items-center gap-2 mb-2">
+                            <AlertCircle className="w-4 h-4" /> 카카오톡 이용자 안내
+                        </p>
+                        <p className="text-orange-700 text-xs leading-relaxed">
+                            카카오톡 내 브라우저에서는 구글 로그인이 차단될 수 있습니다.
+                            자동으로 이동되지 않는다면 아래 버튼을 눌러 외부 브라우저(Chrome/Safari)로 열어주세요.
+                        </p>
+                        <button
+                            onClick={() => {
+                                const url = window.location.href.split('?')[0] + '?openExternal=true';
+                                window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(url)}`;
+                            }}
+                            className="mt-3 w-full flex items-center justify-center gap-2 bg-orange-500 text-white text-sm font-bold py-2 rounded-lg hover:bg-orange-600 transition"
+                        >
+                            <ExternalLink size={14} /> 외부 브라우저로 열기
+                        </button>
+                    </div>
+                )}
 
                 <p className="mt-6 text-xs text-gray-400">
                     로그인하면 서비스 이용약관에 동의하게 됩니다.
