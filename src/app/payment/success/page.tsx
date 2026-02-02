@@ -36,14 +36,34 @@ function SuccessContent() {
                 // For MVP/Test, we assume the redirection with valid params allows us to proceed
 
                 // 2. Update Subscription in Supabase
-                const oneYearLater = new Date();
-                oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+                // Fetch current expiration to add "Trial + 1 Year"
+                const { data: currentSite } = await supabase
+                    .from('sites')
+                    .select('expires_at')
+                    .eq('id', id)
+                    .single();
+
+                let newExpiresAt = new Date();
+                const now = new Date();
+
+                if (currentSite?.expires_at) {
+                    const currentExpireDate = new Date(currentSite.expires_at);
+                    if (currentExpireDate > now) {
+                        // If trial is still active, add 365 days to the existing expiration
+                        newExpiresAt = new Date(currentExpireDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+                    } else {
+                        // Already expired, start from now
+                        newExpiresAt.setFullYear(newExpiresAt.getFullYear() + 1);
+                    }
+                } else {
+                    newExpiresAt.setFullYear(newExpiresAt.getFullYear() + 1);
+                }
 
                 const { error } = await supabase
                     .from('sites')
                     .update({
                         is_paid: true,
-                        expires_at: oneYearLater.toISOString() // Extend by 1 year
+                        expires_at: newExpiresAt.toISOString()
                     })
                     .eq('id', id);
 

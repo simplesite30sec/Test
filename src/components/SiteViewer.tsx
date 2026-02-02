@@ -594,13 +594,13 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         </div>
 
                         {/* Refund Policy Notice */}
-                        <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 text-left">
-                            <h5 className="font-bold text-gray-800 flex items-center gap-2 text-sm mb-2">
-                                <AlertTriangle size={14} className="text-gray-500" /> 환불 정책 안내
+                        <div className="bg-blue-50 p-4 rounded-xl mb-6">
+                            <h5 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" /> 혜택: 남은 체험기간 + 1년 증정
                             </h5>
-                            <ul className="text-xs text-gray-600 space-y-1 ml-1 list-disc list-inside">
-                                <li>결제일로부터 13일 이내: <span className="font-bold text-blue-600">100% 무상 환불</span></li>
-                                <li>결제일로부터 13일 이후: <span className="font-bold text-red-500">환불 불가</span></li>
+                            <ul className="text-xs text-blue-800 space-y-1 ml-1 list-disc list-inside leading-relaxed">
+                                <li>지금 결제해도 <b>남은 체험 기간이 사라지지 않고</b> 1년 뒤로 연장됩니다.</li>
+                                <li>결제일로부터 13일 이내: <span className="font-bold underline">100% 무상 환불</span></li>
                             </ul>
                         </div>
 
@@ -648,7 +648,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         onClick={() => setShowPaymentModal(true)}
                         className="bg-white text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 transition shadow-sm"
                     >
-                        지금 결제하고 1년 소장하기
+                        남은 체험기간 + 1년 연장 👑
                     </button>
                 </div>
             )}

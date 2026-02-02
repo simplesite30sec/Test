@@ -412,14 +412,16 @@ export default function DashboardPage() {
         if (diff <= 0) return "만료됨";
 
         if (isPaid) {
-            // Paid: Months and Days
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const months = Math.floor(days / 30);
-            const remainingDays = days % 30;
-            if (months > 0) return `${months}개월 ${remainingDays}일 남음`;
-            return `${remainingDays}일 남음`;
+            // Paid: Days (rounded up)
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            return `${days}일 남음`;
         } else {
-            // Trial: Hours and Minutes
+            // Trial: If more than 24 hours, show Days (rounded up)
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            if (days > 1) {
+                return `${days}일 남음`;
+            }
+            // Less than 24 hours: Hours and Minutes
             const hours = Math.floor(diff / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             return `${hours}시간 ${minutes}분 남음`;
@@ -739,7 +741,7 @@ export default function DashboardPage() {
                                                 onClick={() => handleSitePayment(site.id, site.name)}
                                                 className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
                                             >
-                                                👑 지금 결제하고 1년 소장하기
+                                                👑 남은 체험기간 + 1년 연장
                                             </button>
                                         </div>
                                     )}
