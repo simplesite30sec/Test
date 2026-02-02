@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/utils/supabase/client';
-import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X, Mail } from 'lucide-react';
+import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X, Mail, Construction } from 'lucide-react';
 import QnABoard from './addons/QnABoard';
 import InquiryForm from './addons/InquiryForm';
 
@@ -437,7 +437,29 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         }
     };
 
+    // Draft Logic: Block Visitors, Show Publish Screen to Owners
     if (data?.status === 'draft') {
+        if (!canManage) {
+            return (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-lg p-10 max-w-md w-full text-center">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Construction className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-3">사이트 준비 중</h1>
+                        <p className="text-gray-500 mb-8">
+                            현재 사이트 제작이 진행 중입니다.<br />
+                            완성된 모습으로 곧 찾아뵙겠습니다!
+                        </p>
+                        <Link href="/" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
+                            SimpleSite 홈으로 이동
+                        </Link>
+                    </div>
+                </div>
+            );
+        }
+
+        // Owner View
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-3xl shadow-xl p-10 max-w-lg w-full text-center border border-blue-100">

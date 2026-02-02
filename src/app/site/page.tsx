@@ -1,66 +1,61 @@
-'use client';
-
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/utils/supabase/client';
+import { Metadata, ResolvingMetadata } from 'next';
+import { createClient } from '@/utils/supabase/client';
 import SiteViewer from '@/components/SiteViewer';
 
-function SiteContent() {
-    const searchParams = useSearchParams();
-    const id = searchParams.get('id') || '';
-    const [initialData, setInitialData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [expiresAt, setExpiresAt] = useState<string | undefined>();
-    const [isPaid, setIsPaid] = useState<boolean>(false);
-
-    useEffect(() => {
-        const loadData = async () => {
-            if (!id) {
-                setLoading(false);
-                return;
-            }
-            try {
-                const { data, error } = await supabase
-                    .from('sites')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-                if (!error && data) {
-                    setInitialData(data);
-                    setExpiresAt(data.expires_at);
-                    setIsPaid(data.is_paid || false);
-                }
-            } catch {
-                // Supabase fetch failed
-            }
-            setLoading(false);
-        };
-        loadData();
-    }, [id]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-gray-500">로딩 중...</div>
-            </div>
-        );
-    }
-
-    if (!id) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-gray-500">사이트 ID가 필요합니다.</div>
-            </div>
-        );
-    }
-
-    return <SiteViewer initialData={initialData} id={id} expiresAt={expiresAt} isPaid={isPaid} />;
+type Props = {
+    searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default function SitePage() {
+// Fetch helper (Server-side)
+async function getSiteData(id: string) {
+    if (!id) return null;
+    const supabase = createClient();
+    const { data } = await supabase.from('sites').select('*').eq('id', id).single();
+    return data;
+}
+
+// Dynamic Metadata Generation
+export async function generateMetadata(
+    { searchParams }: Props,
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const id = searchParams.id as string;
+    const site = await getSiteData(id);
+
+    // Fallback if no site found
+    if (!site) {
+        return {
+            title: 'SimpleSite - 존재하지 않는 페이지',
+            description: '요청하신 페이지를 찾을 수 없습니다.',
+        };
+    }
+
+    const previousImages = (await parent).openGraph?.images || [];
+    const heroImage = site.hero_image_url || [];
+
+    return {
+        title: site.name,
+        description: site.description || site.slogan || 'SimpleSite로 제작된 홈페이지입니다.',
+        openGraph: {
+            title: site.name,
+            description: site.description || site.slogan,
+            images: site.hero_image_url ? [site.hero_image_url, ...previousImages] : previousImages,
+        },
+    };
+}
+
+export default async function SitePage({ searchParams }: Props) {
+    const id = searchParams.id as string;
+
+    // Server-side Fetch for Initial Data (Faster LCP)
+    const siteData = await getSiteData(id);
+
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">로딩 중...</div>}>
-            <SiteContent />
-        </Suspense>
+        <SiteViewer
+            initialData={siteData}
+            id={id}
+            expiresAt={siteData?.expires_at}
+            isPaid={siteData?.is_paid}
+        />
     );
 }
