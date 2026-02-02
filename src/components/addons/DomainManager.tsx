@@ -97,7 +97,10 @@ export default function DomainManager({ siteId }: { siteId: string }) {
                                 {result.domain} {result.available ? '구매 가능!' : '이미 사용 중입니다.'}
                             </p>
                             {result.available && (
-                                <p className="text-sm text-green-700">가격: 35,000원 / 1년</p>
+                                <div className="text-sm text-green-700 mt-2 space-y-1">
+                                    <p>✅ 가격: 35,000원 / 1년 (구매 즉시 유효)</p>
+                                    <p className="text-red-600 font-bold">🚫 도메인은 구매 후 환불이 절대 불가능합니다.</p>
+                                </div>
                             )}
                         </div>
                     </div>

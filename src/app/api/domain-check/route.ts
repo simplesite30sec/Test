@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Basic validation
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(domain)) {
+    if (!/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(domain)) {
         return NextResponse.json({ error: 'Invalid domain format' }, { status: 400 });
     }
 
