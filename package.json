@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && shx rm -rf .vercel/output/static && shx mkdir -p .vercel/output && shx mv out .vercel/output/static",
+    "build": "next build",
     "start": "next start",
     "deploy": "git add . && git commit -m \"Deploy\" && git push",
     "lint": "next lint"
