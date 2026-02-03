@@ -32,7 +32,6 @@ type SiteData = {
         menu?: string;
         reviews?: string;
         contact?: string;
-        inquiry?: string;
         qna?: string;
     };
     font_family?: string;
@@ -539,7 +538,6 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         menu: section_titles?.menu || 'Menu / Portfolio',
         reviews: section_titles?.reviews || 'Customer Reviews',
         contact: section_titles?.contact || 'Contact & Location',
-        inquiry: section_titles?.inquiry || '문의하기',
         qna: section_titles?.qna || 'Q&A'
     };
 
@@ -684,7 +682,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             <main>
                 {/* Dynamic Section Rendering */}
                 {(() => {
-                    const order = data?.section_order || ['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact'];
+                    const order = data?.section_order || ['hero', 'about', 'menu', 'reviews', 'qna', 'contact'];
 
                     // Render Functions for each section
                     const renderSection = (section: string) => {

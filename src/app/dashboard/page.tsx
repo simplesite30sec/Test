@@ -727,7 +727,7 @@ export default function DashboardPage() {
                                     <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                                         {allSiteAddons[site.id]?.map(addon => (
                                             <span key={addon} className="bg-white/90 backdrop-blur-md text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm border border-gray-100 flex items-center gap-1">
-                                                {addon === 'inquiry' ? '📩 문의' : addon === 'qna' ? '❓ Q&A' : addon}
+                                                {addon === 'qna' ? '❓ Q&A' : addon}
                                             </span>
                                         ))}
                                     </div>
@@ -826,7 +826,8 @@ export default function DashboardPage() {
                                 <div className="grid grid-cols-1 gap-4">
                                     {availableAddons.map(addon => {
                                         const isInstalled = siteAddons.includes(addon.id); // Active
-                                        const isPurchased = purchasedAddons[addon.id];
+                                        const addonInfo = purchasedAddons[addon.id]; // { type, purchase_type, coupon_code, expires_at }
+                                        const isPaidOrCoupon = addonInfo?.type === 'paid' || addonInfo?.type === 'coupon';
                                         const isPending = pendingAddons[addon.id];
 
                                         return (
@@ -837,11 +838,11 @@ export default function DashboardPage() {
                                                         <p className="text-sm text-gray-500 mb-2">{addon.desc}</p>
 
                                                         {/* Purchase Status Badge */}
-                                                        {isPurchased ? (
+                                                        {isPaidOrCoupon ? (
                                                             <div className="flex items-center gap-2 mb-2">
-                                                                {isPurchased.purchase_type === 'coupon' ? (
+                                                                {addonInfo?.purchase_type === 'coupon' ? (
                                                                     <span className="inline-block bg-purple-50 text-purple-600 px-2 py-0.5 rounded text-xs font-bold">
-                                                                        🎟️ 소유 중 (쿠폰: {isPurchased.coupon_code})
+                                                                        🎟️ 소유 중 (쿠폰: {addonInfo?.coupon_code})
                                                                     </span>
                                                                 ) : (
                                                                     <span className="inline-block bg-green-50 text-green-600 px-2 py-0.5 rounded text-xs font-bold">
@@ -884,7 +885,7 @@ export default function DashboardPage() {
                                                                         >
                                                                             <CheckCircle size={18} /> 사용 중
                                                                         </button>
-                                                                        {!isPurchased && (
+                                                                        {!isPaidOrCoupon && (
                                                                             <button
                                                                                 onClick={() => {
                                                                                     setSelectedAddon(addon);
