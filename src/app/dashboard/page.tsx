@@ -158,8 +158,8 @@ export default function DashboardPage() {
             return;
         }
 
-        // Trial sites -> Free installation
-        if (!site.is_paid) {
+        // Trial sites -> Free installation OR Q&A (Always trial first)
+        if (!site.is_paid || addon.id === 'qna') {
             await installAddonFree(addon.id);
             return;
         }

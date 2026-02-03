@@ -173,9 +173,22 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
                         is_paid: true
                     }).eq('id', req.site_id);
                 }
-            } else {
                 // Addon purchase
-                const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+                // Fetch current addon to get existing expires_at
+                const { data: existingAddon } = await supabase
+                    .from('site_addons')
+                    .select('config')
+                    .eq('site_id', req.site_id)
+                    .eq('addon_type', req.addon_type)
+                    .single();
+
+                let baseTime = Date.now();
+                if (existingAddon?.config?.expires_at) {
+                    const currentExp = new Date(existingAddon.config.expires_at).getTime();
+                    if (currentExp > baseTime) baseTime = currentExp;
+                }
+                const expiresAt = new Date(baseTime + 365 * 24 * 60 * 60 * 1000).toISOString();
+
                 await supabase.from('site_addons').upsert({
                     site_id: req.site_id,
                     addon_type: req.addon_type,
