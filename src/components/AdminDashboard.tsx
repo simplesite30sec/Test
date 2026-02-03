@@ -132,7 +132,10 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
             ...(targetReq.config || {}),
             status: newStatus,
             reason: reason || targetReq.config?.reason || '',
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            expires_at: newStatus === 'active'
+                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                : targetReq.config?.expires_at
         };
 
         const { error } = await supabase
@@ -172,10 +175,11 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
                 }
             } else {
                 // Addon purchase
+                const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
                 await supabase.from('site_addons').upsert({
                     site_id: req.site_id,
                     addon_type: req.addon_type,
-                    config: {},
+                    config: { expires_at: expiresAt },
                     is_active: true,
                     is_purchased: true,
                     purchase_type: 'manual',

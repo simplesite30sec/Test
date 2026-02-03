@@ -49,7 +49,7 @@ export default function DashboardPage() {
     const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
     const [showStore, setShowStore] = useState(false);
     const [siteAddons, setSiteAddons] = useState<string[]>([]); // Active addons for selected site
-    const [purchasedAddons, setPurchasedAddons] = useState<Record<string, { type: string, purchase_type: string, coupon_code?: string }>>({}); // Purchased addons with details
+    const [purchasedAddons, setPurchasedAddons] = useState<Record<string, { type: string, purchase_type: string, coupon_code?: string, expires_at?: string }>>({}); // Purchased addons with details
     const [pendingAddons, setPendingAddons] = useState<Record<string, boolean>>({}); // Addons with pending payment requests
     const [allSiteAddons, setAllSiteAddons] = useState<Record<string, string[]>>({}); // siteId -> addonTypes
 
@@ -83,13 +83,14 @@ export default function DashboardPage() {
             setSiteAddons(data.filter(d => d.is_active).map(d => d.addon_type));
 
             // Build purchased addons map
-            const purchased: Record<string, { type: string, purchase_type: string, coupon_code?: string }> = {};
+            const purchased: Record<string, { type: string, purchase_type: string, coupon_code?: string, expires_at?: string }> = {};
             data.forEach(addon => {
-                if (addon.is_purchased) {
+                if (addon.is_purchased || addon.is_active) {
                     purchased[addon.addon_type] = {
-                        type: addon.purchase_type,
-                        purchase_type: addon.purchase_type,
-                        coupon_code: addon.coupon_code
+                        type: addon.purchase_type || 'trial',
+                        purchase_type: addon.purchase_type || 'trial',
+                        coupon_code: addon.coupon_code,
+                        expires_at: (addon.config as any)?.expires_at
                     };
                 }
             });
@@ -180,14 +181,19 @@ export default function DashboardPage() {
         const { error } = await supabase.from('site_addons').upsert({
             site_id: selectedSiteId,
             addon_type: addonId,
-            config: {},
+            config: { expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
             is_active: true,
             is_purchased: false // Free trial
         }, { onConflict: 'site_id,addon_type' });
 
         if (!error) {
-            alert('무료 체험 기간 중에는 무료로 추가됩니다!');
+            alert(addonId === 'qna' ? 'Q&A 게시판이 1개월 무료 체험으로 활성화되었습니다! 결제 시 1년 더 이용 가능합니다.' : '무료 체험 기간 중에는 무료로 추가됩니다!');
+            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
             setSiteAddons([...siteAddons, addonId]);
+            setPurchasedAddons(prev => ({
+                ...prev,
+                [addonId]: { type: 'trial', purchase_type: 'trial', expires_at: expiresAt }
+            }));
             setAllSiteAddons(prev => ({
                 ...prev,
                 [selectedSiteId]: Array.from(new Set([...(prev[selectedSiteId] || []), addonId]))
@@ -839,7 +845,7 @@ export default function DashboardPage() {
                                                                     </span>
                                                                 ) : (
                                                                     <span className="inline-block bg-green-50 text-green-600 px-2 py-0.5 rounded text-xs font-bold">
-                                                                        💎 소유 중 (결제)
+                                                                        💎 소유 중 (결제 완료)
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -847,9 +853,13 @@ export default function DashboardPage() {
                                                             <span className="inline-block bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded text-xs font-bold">
                                                                 ⏳ 입금 확인 중
                                                             </span>
+                                                        ) : isInstalled ? (
+                                                            <span className="inline-block bg-orange-50 text-orange-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                                🎁 무료 체험 사용 중 ({purchasedAddons[addon.id]?.expires_at ? `기한: ${new Date(purchasedAddons[addon.id].expires_at!).toLocaleDateString()}` : '기한: 1개월'})
+                                                            </span>
                                                         ) : (
                                                             <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
-                                                                {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
+                                                                {addon.price.toLocaleString()}원 (1년권)
                                                             </span>
                                                         )}
                                                     </div>
@@ -866,13 +876,27 @@ export default function DashboardPage() {
                                                                         <CheckCircle size={18} /> 사용 및 관리 중
                                                                     </button>
                                                                 ) : (
-                                                                    <button
-                                                                        onClick={() => handleToggleAddon(addon.id, true)}
-                                                                        className="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100 border border-green-200"
-                                                                        title="클릭하여 비활성화"
-                                                                    >
-                                                                        <CheckCircle size={18} /> 사용 중
-                                                                    </button>
+                                                                    <div className="flex flex-col gap-2">
+                                                                        <button
+                                                                            onClick={() => handleToggleAddon(addon.id, true)}
+                                                                            className="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 text-sm"
+                                                                            title="클릭하여 비활성화"
+                                                                        >
+                                                                            <CheckCircle size={18} /> 사용 중
+                                                                        </button>
+                                                                        {!isPurchased && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setSelectedAddon(addon);
+                                                                                    setIsExtension(false);
+                                                                                    setShowPaymentModal(true);
+                                                                                }}
+                                                                                className="px-4 py-1.5 rounded-lg bg-orange-500 text-white text-[10px] font-bold hover:bg-orange-600 transition shadow-sm"
+                                                                            >
+                                                                                💳 정식 버전(1년) 결제하기
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 )}
                                                             </>
                                                         ) : isPending ? (
@@ -902,10 +926,6 @@ export default function DashboardPage() {
                                             </div>
                                         );
                                     })}
-                                </div>
-                                <div className="mt-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-sm text-yellow-800">
-                                    <h5 className="font-bold flex items-center gap-2 mb-1"><AlertCircle size={14} /> 안내사항</h5>
-                                    <p>무료 체험 기간(소유권 미보유) 중에는 모든 애드온을 <b>무료</b>로 설치하여 테스트할 수 있습니다.</p>
                                 </div>
                             </div>
                         </div>

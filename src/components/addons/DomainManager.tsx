@@ -104,6 +104,11 @@ export default function DomainManager({ siteId }: { siteId: string }) {
                                 <p className="text-green-800 mb-3">
                                     연결 도메인: <a href={`https://${config.domain}`} target="_blank" rel="noopener noreferrer" className="font-mono text-lg underline">{config.domain}</a>
                                 </p>
+                                {config.expires_at && (
+                                    <p className="text-sm font-bold text-green-700 mb-3">
+                                        📅 만료 예정일: {new Date(config.expires_at).toLocaleDateString()} (1년)
+                                    </p>
+                                )}
                                 <p className="text-sm text-green-700 italic">이제 전 세계에서 해당 주소로 접속 가능합니다.</p>
                             </div>
                         </div>
