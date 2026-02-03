@@ -22,8 +22,34 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
             .eq('addon_type', 'domain')
             .order('created_at', { ascending: false });
 
-        if (!error) {
-            setRequests(data || []);
+        if (!error && data) {
+            // Fetch user emails from profiles table
+            const userIds = Array.from(new Set(data.map((r: any) => r.sites?.user_id).filter(Boolean)));
+            let emailMap: Record<string, string> = {};
+
+            if (userIds.length > 0) {
+                try {
+                    const { data: profiles } = await supabase
+                        .from('profiles')
+                        .select('id, email')
+                        .in('id', userIds);
+
+                    if (profiles) {
+                        profiles.forEach((p: any) => {
+                            if (p.email) emailMap[p.id] = p.email;
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch emails', e);
+                }
+            }
+
+            const requestsWithEmail = data.map((r: any) => ({
+                ...r,
+                user_email: emailMap[r.sites?.user_id]
+            }));
+
+            setRequests(requestsWithEmail);
         }
     }, []);
 
@@ -111,7 +137,7 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
                         <table className="w-full text-left border-t border-indigo-100">
                             <thead className="bg-gray-50 text-gray-500 uppercase font-medium border-b text-[11px]">
                                 <tr>
-                                    <th className="p-4 w-1/4">신청 도메인 / ID</th>
+                                    <th className="p-4 w-1/4">신청 도메인 / 사용자</th>
                                     <th className="p-4 w-1/6">사이트 (슬러그)</th>
                                     <th className="p-4 w-1/8">상태</th>
                                     <th className="p-4 w-1/8">신청일</th>
@@ -124,7 +150,14 @@ export default function AdminDashboard({ userEmail }: { userEmail?: string }) {
                                 ) : requests.map((req) => (
                                     <tr key={req.id} className="hover:bg-gray-50 transition">
                                         <td className="p-4">
-                                            <div className="font-bold text-gray-900 break-all">{req.config?.domain || 'Unknown Domain'}</div>
+                                            <div className="font-bold text-gray-900 break-all mb-1">{req.config?.domain || 'Unknown Domain'}</div>
+                                            {req.user_email ? (
+                                                <div className="text-xs text-indigo-700 font-bold bg-indigo-50 px-2 py-1 rounded inline-block mb-1">
+                                                    📧 {req.user_email}
+                                                </div>
+                                            ) : (
+                                                <div className="text-[10px] text-gray-500 mb-1">USER: {req.sites?.user_id?.substring(0, 8)}...</div>
+                                            )}
                                             <div className="text-[10px] text-gray-400">Addon ID: {req.id.substring(0, 8)}...</div>
                                         </td>
                                         <td className="p-4">

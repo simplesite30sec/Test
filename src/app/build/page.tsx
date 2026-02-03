@@ -526,7 +526,30 @@ function HomeContent() {
 
                     // If it was a first trial, mark it as used in profile
                     if (canUseTrial) {
-                        await supabase.from('profiles').upsert({ id: user?.id, has_used_trial: true });
+                        try {
+                            const { error: profileError } = await supabase.from('profiles').upsert({
+                                id: user?.id,
+                                has_used_trial: true,
+                                email: user?.email // Ensure email is saved
+                            });
+                            if (profileError) {
+                                // Fallback: If email column doesn't exist, try updating just has_used_trial
+                                // This handles the case where schema hasn't been updated yet
+                                await supabase.from('profiles').upsert({ id: user?.id, has_used_trial: true });
+                            }
+                        } catch (e) {
+                            // Ignore profile update errors to ensure site creation succeeds
+                            console.warn('Profile update failed:', e);
+                        }
+                    } else {
+                        // Update email for existing users too
+                        try {
+                            await supabase.from('profiles').upsert({
+                                id: user?.id,
+                                email: user?.email,
+                                has_used_trial: true
+                            });
+                        } catch (e) { }
                     }
                 }
 
