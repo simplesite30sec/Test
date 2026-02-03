@@ -36,6 +36,7 @@ type SiteData = {
     font_family?: string;
     slug?: string;
     hero_height?: 'full' | 'medium' | 'small';
+    portfolio_mode?: 'landscape' | 'portrait';
 };
 
 type SiteViewerProps = {
@@ -398,6 +399,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
         reviews = [],
         portfolio = [],
         hero_height = 'full',
+        portfolio_mode = 'landscape',
     } = data;
 
     // Helper to convert hex to rgba
@@ -637,24 +639,10 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {/* Premium Status now shown in footer instead of top banner */}
 
             {/* Trial Timer Banner */}
-            {!isPaid && timeLeft && (
-                <div className="fixed top-0 left-0 right-0 bg-gray-900/90 backdrop-blur-md text-white py-3 px-6 text-center text-sm font-medium z-[60] shadow-md flex justify-center items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-orange-400" />
-                        <span className="text-gray-300">무료 체험 종료까지:</span>
-                        <span className="font-mono font-bold text-orange-400 text-base tabular-nums">{timeLeft}</span>
-                    </div>
-                    <button
-                        onClick={() => setShowPaymentModal(true)}
-                        className="bg-white text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 transition shadow-sm"
-                    >
-                        남은 체험기간 + 1년 연장 👑
-                    </button>
-                </div>
-            )}
+            {/* Premium Status now shown in footer instead of top banner */}
 
             {/* Header */}
-            <header className={`fixed w-full ${!isPaid && timeLeft ? 'top-10' : 'top-0'} bg-white/80 backdrop-blur-md z-50 border-b border-gray-100`}>
+            <header className={`fixed w-full top-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100`}>
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {data?.logo_url ? (
@@ -708,22 +696,31 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                     </section>
                                 ) : null;
                             case 'menu':
+                                const isPortrait = portfolio_mode === 'portrait';
                                 return portfolio && portfolio.length > 0 ? (
                                     <section key="menu" id="menu" className="py-24 bg-gray-50 overflow-hidden">
                                         <div className="max-w-6xl mx-auto px-6">
                                             <h3 className="text-3xl font-bold mb-12 text-center">{titles.menu}</h3>
                                             <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
                                                 {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
-                                                    <div key={idx} className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0">
+                                                    <div
+                                                        key={idx}
+                                                        className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0
+                                                            ${isPortrait ? 'min-w-[280px] md:min-w-[340px]' : 'min-w-[300px] md:min-w-[350px]'}`}
+                                                    >
                                                         {item.image_url ? (
                                                             <div
-                                                                className="h-64 overflow-hidden bg-gray-200 cursor-pointer flex items-center justify-center"
+                                                                className={`${isPortrait ? 'h-[450px]' : 'h-64'} overflow-hidden bg-gray-200 cursor-pointer flex items-center justify-center`}
                                                                 onClick={() => setLightboxImage(item.image_url)}
                                                             >
-                                                                <img src={item.image_url} alt={item.title} className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500" />
+                                                                <img
+                                                                    src={item.image_url}
+                                                                    alt={item.title}
+                                                                    className={`w-full h-full ${isPortrait ? 'object-cover' : 'object-contain'} transform group-hover:scale-105 transition duration-500`}
+                                                                />
                                                             </div>
                                                         ) : (
-                                                            <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400"><span className="text-sm">이미지 없음</span></div>
+                                                            <div className={`${isPortrait ? 'h-[450px]' : 'h-48'} bg-gray-100 flex items-center justify-center text-gray-400`}><span className="text-sm">이미지 없음</span></div>
                                                         )}
                                                         <div className="p-6">
                                                             <h4 className="font-bold text-xl mb-2">{item.title}</h4>
@@ -874,17 +871,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {/* Actions - Only show for site owner in edit mode */}
             {canManage && isEditMode && (
                 <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
-                    {/* Only show payment button if not paid */}
-                    {!isPaid && (
-                        <button
-                            onClick={() => setShowPaymentModal(true)}
-                            className="bg-[#3182F6] hover:bg-[#1b64da] text-white p-4 rounded-full shadow-lg backdrop-blur transition transform hover:scale-110 group flex items-center gap-2"
-                            title="결제 및 게시"
-                        >
-                            <span className="font-bold hidden group-hover:block whitespace-nowrap">결제 & 사이트 게시 (9,900원)</span>
-                            <Star size={24} className="fill-white" />
-                        </button>
-                    )}
+                    {/* Payment button removed as per user request */}
 
                     <a
                         href={`/build?edit=${id}`}
@@ -930,19 +917,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 </div>
             </footer>
             {/* Ownership badge as blue bar at 70% opacity */}
-            {isPaid && expiresAt && (
-                <div className="bg-blue-600/70 text-white py-3 px-6 text-center text-sm">
-                    <div className="flex justify-center items-center gap-2 flex-wrap">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>사이트 소유권 보유 중</span>
-                        <span className="opacity-75 mx-1">|</span>
-                        <span className="opacity-90">만료일: {new Date(expiresAt).toLocaleDateString()}</span>
-                        <span className="bg-blue-500 px-2 py-0.5 rounded text-xs ml-2">
-                            D-{Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
-                        </span>
-                    </div>
-                </div>
-            )}
+            {/* Ownership banner removed as per user request */}
         </div>
     );
 }

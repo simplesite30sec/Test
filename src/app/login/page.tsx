@@ -30,7 +30,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/build/`,
+                redirectTo: `${window.location.origin}/dashboard`,
             },
         });
         if (error) {
@@ -38,6 +38,17 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+
+    // Redirect if already logged in
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.href = '/dashboard';
+            }
+        };
+        checkUser();
+    }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

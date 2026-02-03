@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, Palette, Image as ImageIcon, Sliders, Plus, Trash2, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2, Globe } from 'lucide-react';
+import { Building2, Palette, Image as ImageIcon, Sliders, Plus, Trash2, Instagram, Facebook, Youtube, MessageCircle, Star, LogOut, LayoutDashboard, ArrowUp, ArrowDown, Mail, Type, ChevronDown, ChevronUp, CheckCircle2, Globe, RectangleHorizontal, Square } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -145,6 +145,7 @@ function HomeContent() {
     });
     const [heroImage, setHeroImage] = useState<File | null>(null);
     const [heroImageUrl, setHeroImageUrl] = useState<string>('');
+    const [portfolioMode, setPortfolioMode] = useState<'landscape' | 'portrait'>('landscape');
 
     // Logo State
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -231,6 +232,7 @@ function HomeContent() {
                     if (siteData.section_titles) setSectionTitles(siteData.section_titles as typeof sectionTitles);
                     if (siteData.font_family) setFontFamily(siteData.font_family);
                     if (siteData.hero_height) setHeroHeight(siteData.hero_height as 'full' | 'medium' | 'small');
+                    if (siteData.portfolio_mode) setPortfolioMode(siteData.portfolio_mode as 'landscape' | 'portrait');
 
                     // Parse Phones
                     const phoneParts = (siteData.phone || '').split('|').map((s: string) => s.trim());
@@ -465,7 +467,8 @@ function HomeContent() {
                 section_order: sectionOrder,
                 section_titles: sectionTitles,
                 font_family: fontFamily,
-                hero_height: heroHeight
+                hero_height: heroHeight,
+                portfolio_mode: portfolioMode
             };
 
             try {
@@ -926,7 +929,23 @@ function HomeContent() {
                         isOptional={true}
                         subtitle="판매하는 상품이나 작업물을 소개하세요."
                     >
-                        <div className="flex justify-end mb-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex bg-gray-100 p-1 rounded-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => setPortfolioMode('landscape')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition ${portfolioMode === 'landscape' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                >
+                                    <RectangleHorizontal size={14} /> 가로형 (기본)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPortfolioMode('portrait')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition ${portfolioMode === 'portrait' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                >
+                                    <Square size={14} /> 세로형 (크게)
+                                </button>
+                            </div>
                             <button type="button" onClick={addPortfolioItem} className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition"><Plus size={16} /> 항목 추가하기</button>
                         </div>
                         {portfolio.length === 0 && <p className="text-center text-gray-400 py-6 bg-gray-50 rounded-lg text-sm">등록된 항목이 없습니다.</p>}
@@ -1076,22 +1095,25 @@ function HomeContent() {
                         onToggle={() => toggleSection('font')}
                         subtitle="사이트 전체에 적용될 글씨체를 선택하세요."
                     >
-                        <select
-                            value={fontFamily}
-                            onChange={(e) => setFontFamily(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                            style={{ fontFamily: fontFamily }}
-                        >
+                        <div className="grid grid-cols-2 gap-3">
                             {FONT_OPTIONS.map(font => (
-                                <option
+                                <button
                                     key={font.value}
-                                    value={font.value}
+                                    type="button"
+                                    onClick={() => setFontFamily(font.value)}
+                                    className={`px-4 py-3 rounded-lg border text-left transition relative ${fontFamily === font.value ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50 text-gray-700'}`}
                                     style={{ fontFamily: font.value }}
                                 >
-                                    {font.label} (abc가나다)
-                                </option>
+                                    <span className="block text-sm font-medium mb-1">{font.label}</span>
+                                    <span className="block text-xs opacity-70">모던하고 깔끔한 느낌</span>
+                                    {fontFamily === font.value && (
+                                        <div className="absolute top-3 right-3 text-blue-500">
+                                            <CheckCircle2 size={16} />
+                                        </div>
+                                    )}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </AccordionSection>
                 </div>
 
