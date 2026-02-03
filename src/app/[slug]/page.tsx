@@ -18,7 +18,7 @@ export async function generateMetadata(
     // Fetch site data for metadata
     const { data: site } = await supabase
         .from('sites')
-        .select('name, description, hero_image_url')
+        .select('name, description, hero_image_url, seo_title, seo_description')
         .eq('slug', slug)
         .single();
 
@@ -29,11 +29,11 @@ export async function generateMetadata(
     }
 
     return {
-        title: site.name,
-        description: site.description || 'Welcome to my website',
+        title: site.seo_title || site.name,
+        description: site.seo_description || site.description || 'Welcome to my website',
         openGraph: {
-            title: site.name,
-            description: site.description || '',
+            title: site.seo_title || site.name,
+            description: site.seo_description || site.description || '',
             images: site.hero_image_url ? [site.hero_image_url] : [],
         },
     };
@@ -53,6 +53,10 @@ export default async function SlugPage({ params }: Props) {
     if (error || !site) {
         notFound();
     }
+
+    // Increment View Count (Fire and forget)
+    // We don't await this to avoid slowing down page load
+    supabase.rpc('increment_view_count', { site_id_param: site.id });
 
     // Pass to SiteViewer (Client Component)
     // Cast site to any to match SiteData if types slightly mismatch (e.g. optional fields)

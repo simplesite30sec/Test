@@ -142,6 +142,9 @@ function HomeContent() {
         phone2: '',
         phone3: '',
         slug: '',
+        seo_title: '',
+        seo_description: '',
+        google_analytics_id: '',
     });
     const [heroImage, setHeroImage] = useState<File | null>(null);
     const [heroImageUrl, setHeroImageUrl] = useState<string>('');
@@ -251,6 +254,9 @@ function HomeContent() {
                         kakaoMap: siteData.map_links?.kakao || '',
                         googleMap: siteData.google_map || '',
                         slug: siteData.slug || '',
+                        seo_title: siteData.seo_title || '',
+                        seo_description: siteData.seo_description || '',
+                        google_analytics_id: siteData.google_analytics_id || '',
                     });
                     setHeroImageUrl(siteData.hero_image_url || '');
                     setLogoUrl(siteData.logo_url || '');
@@ -450,6 +456,9 @@ function HomeContent() {
 
             const siteData = {
                 slug: finalSlug,
+                seo_title: formData.seo_title,
+                seo_description: formData.seo_description,
+                google_analytics_id: formData.google_analytics_id,
                 name: formData.name,
                 slogan: formData.slogan,
                 description: formData.description,
@@ -1083,6 +1092,77 @@ function HomeContent() {
                                     onChange={(e) => setSectionTitles({ ...sectionTitles, qna: e.target.value })}
                                     className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                 />
+                            </div>
+                        </div>
+                    </AccordionSection>
+
+                    {/* SEO Settings */}
+                    <AccordionSection
+                        title="검색 엔진 최적화 (SEO) & Google Analytics"
+                        icon={Globe}
+                        isOpen={openSections.has('seo')}
+                        onToggle={() => toggleSection('seo')}
+                        subtitle="네이버/구글 검색 노출 및 방문자 통계 설정"
+                    >
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                    검색 노출 제목 (Page Title)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="seo_title"
+                                    value={formData.seo_title}
+                                    onChange={handleChange}
+                                    placeholder={formData.name ? `${formData.name} - 공식 홈페이지` : "예: 하루 식당 - 정통 한식 맛집"}
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <p className="text-xs text-gray-400 mt-2">입력하지 않으면 사이트 이름이 기본 사용됩니다.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                    검색 설명 (Meta Description)
+                                </label>
+                                <textarea
+                                    name="seo_description"
+                                    value={formData.seo_description}
+                                    onChange={handleChange}
+                                    placeholder="사이트에 대한 간략한 설명을 입력하세요. 검색 결과 미리보기에 표시됩니다."
+                                    rows={3}
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+                            <div className="pt-4 border-t border-gray-100">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-orange-100 text-orange-600 p-1 rounded-md"><Globe size={14} /></span>
+                                        Google Analytics 측정 ID (선택)
+                                    </div>
+                                    <a
+                                        href="https://analytics.google.com/analytics/web/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-500 hover:text-blue-700 underline flex items-center gap-1"
+                                    >
+                                        구글 애널리틱스 바로가기 ↗
+                                    </a>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="google_analytics_id"
+                                    value={formData.google_analytics_id}
+                                    onChange={handleChange}
+                                    placeholder="G-XXXXXXXXXX"
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                                />
+                                <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 leading-relaxed">
+                                    <p className="font-bold text-gray-700 mb-1">💡 측정 ID는 어디서 찾나요?</p>
+                                    <ol className="list-decimal list-inside space-y-1">
+                                        <li>구글 애널리틱스 접속 후 <b>[관리]</b> → <b>[데이터 스트림]</b> 클릭</li>
+                                        <li>내 사이트를 선택하면 <b>측정 ID</b>(G-로 시작)를 복사할 수 있습니다.</li>
+                                        <li>이곳에 붙여넣기 하면 방문자 통계가 자동 연결됩니다!</li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
                     </AccordionSection>

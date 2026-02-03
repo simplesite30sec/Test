@@ -20,6 +20,7 @@ type Site = {
     created_at: string;
     user_id: string;
     slug?: string;
+    view_count: number;
 };
 
 type Payment = {
@@ -49,6 +50,7 @@ export default function DashboardPage() {
     const [showStore, setShowStore] = useState(false);
     const [siteAddons, setSiteAddons] = useState<string[]>([]); // Active addons for selected site
     const [purchasedAddons, setPurchasedAddons] = useState<Record<string, { type: string, purchase_type: string, coupon_code?: string }>>({}); // Purchased addons with details
+    const [pendingAddons, setPendingAddons] = useState<Record<string, boolean>>({}); // Addons with pending payment requests
     const [allSiteAddons, setAllSiteAddons] = useState<Record<string, string[]>>({}); // siteId -> addonTypes
 
     // Payment Modal State
@@ -92,8 +94,23 @@ export default function DashboardPage() {
                 }
             });
             setPurchasedAddons(purchased);
+        }
 
-            setPurchasedAddons(purchased);
+        // Fetch Pending Payment Requests
+        const { data: pendingReqs } = await supabase
+            .from('payment_requests')
+            .select('addon_type')
+            .eq('site_id', siteId)
+            .eq('status', 'pending');
+
+        if (pendingReqs) {
+            const pendingMap: Record<string, boolean> = {};
+            pendingReqs.forEach(req => {
+                if (req.addon_type) pendingMap[req.addon_type] = true;
+            });
+            setPendingAddons(pendingMap);
+        } else {
+            setPendingAddons({});
         }
     };
 
@@ -292,8 +309,9 @@ export default function DashboardPage() {
             });
 
             if (!error) {
-                alert('입금 확인 요청이 완료되었습니다!\n\n입금 확인 후 1시간 이내에 기능이 구동됩니다. 감사합니다!');
+                alert('입금 확인 요청이 완료되었습니다!\n\n입금 확인은 약 3시간 정도 소요됩니다.\n3시간 이후에도 적용되지 않으면 010-2216-9054로 문의 주세요.');
                 setShowPaymentModal(false);
+                setPendingAddons(prev => ({ ...prev, [selectedAddon.id]: true }));
             } else {
                 alert('요청 실패: ' + error.message);
             }
@@ -581,6 +599,10 @@ export default function DashboardPage() {
                                                                     <Calendar size={12} />
                                                                     <span>생성일: {new Date(site.created_at).toLocaleDateString()}</span>
                                                                 </div>
+                                                                <div className="flex items-center gap-2 text-gray-500">
+                                                                    <TrendingUp size={12} />
+                                                                    <span>조회수: {site.view_count || 0}</span>
+                                                                </div>
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center gap-2 text-blue-500 font-medium">
                                                                         <Eye size={12} />
@@ -797,8 +819,10 @@ export default function DashboardPage() {
                             <div className="p-6 bg-gray-50 max-h-[60vh] overflow-y-auto">
                                 <div className="grid grid-cols-1 gap-4">
                                     {availableAddons.map(addon => {
-                                        const isInstalled = siteAddons.includes(addon.id);
+                                        const isInstalled = siteAddons.includes(addon.id); // Active
                                         const isPurchased = purchasedAddons[addon.id];
+                                        const isPending = pendingAddons[addon.id];
+
                                         return (
                                             <div key={addon.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
                                                 <div className="flex justify-between items-start mb-3">
@@ -819,6 +843,10 @@ export default function DashboardPage() {
                                                                     </span>
                                                                 )}
                                                             </div>
+                                                        ) : isPending ? (
+                                                            <span className="inline-block bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded text-xs font-bold">
+                                                                ⏳ 입금 확인 중
+                                                            </span>
                                                         ) : (
                                                             <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-bold">
                                                                 {addon.price.toLocaleString()}원 (소유 시) / 체험 무료
@@ -831,17 +859,29 @@ export default function DashboardPage() {
                                                         {isInstalled ? (
                                                             <>
                                                                 {/* Toggle Button */}
-                                                                <button
-                                                                    onClick={() => handleToggleAddon(addon.id, true)}
-                                                                    className="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100 border border-green-200"
-                                                                    title="클릭하여 비활성화"
-                                                                >
-                                                                    <CheckCircle size={18} /> 사용 중
-                                                                </button>
-
-                                                                {/* Settings Button (only for inquiry) */}
-
+                                                                {addon.id === 'domain' ? (
+                                                                    <button
+                                                                        className="px-4 py-2 rounded-xl font-bold flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-200 cursor-default"
+                                                                    >
+                                                                        <CheckCircle size={18} /> 사용 및 관리 중
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleToggleAddon(addon.id, true)}
+                                                                        className="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100 border border-green-200"
+                                                                        title="클릭하여 비활성화"
+                                                                    >
+                                                                        <CheckCircle size={18} /> 사용 중
+                                                                    </button>
+                                                                )}
                                                             </>
+                                                        ) : isPending ? (
+                                                            <button
+                                                                disabled
+                                                                className="px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                            >
+                                                                <Clock size={18} /> 입금 확인중
+                                                            </button>
                                                         ) : (
                                                             <button
                                                                 onClick={() => handleInstallAddon(addon)}
@@ -853,8 +893,8 @@ export default function DashboardPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Domain Manager Logic */}
-                                                {addon.id === 'domain' && !isInstalled && (
+                                                {/* Domain Manager Logic - Only shown when INSTALLED (Paid/Active) */}
+                                                {addon.id === 'domain' && isInstalled && (
                                                     <div className="mt-4 pt-4 border-t border-gray-100">
                                                         <DomainManager siteId={selectedSiteId} />
                                                     </div>
@@ -1047,7 +1087,7 @@ export default function DashboardPage() {
                                 </div>
                                 {paymentMethod === 'card' && (
                                     <p className="mt-4 text-[10px] text-gray-400 text-center">
-                                        ※ 입금 확인은 영업시간 내 1시간 이내에 처리됩니다.
+                                        ※ 입금 확인은 약 3시간 정도 소요됩니다. (문의: 010-2216-9054)
                                     </p>
                                 )}
                             </div>

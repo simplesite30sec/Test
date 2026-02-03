@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { supabase } from '@/utils/supabase/client';
 import { Phone, MapPin, Edit, Star, Quote, Instagram, Facebook, Youtube, MessageCircle, Clock, AlertTriangle, Pause, Globe, CheckCircle, X, Mail, Construction } from 'lucide-react';
 import QnABoard from './addons/QnABoard';
@@ -16,6 +17,7 @@ type SiteData = {
     hero_opacity: number;
     hero_image_url: string;
     logo_url?: string;
+    google_analytics_id?: string;
     map_links: { naver?: string; kakao?: string };
     google_map?: string;
     social_links?: { instagram?: string; facebook?: string; blog?: string; tiktok?: string; threads?: string; youtube?: string; email?: string };
@@ -552,6 +554,39 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
             {fontLink && (
                 <link rel="stylesheet" href={fontLink} />
             )}
+
+            {/* 1. Global Admin GA (Tracks ALL sites) */}
+            <Script
+                src="https://www.googletagmanager.com/gtag/js?id=G-PZ73QVCM4J"
+                strategy="afterInteractive"
+            />
+            <Script id="global-analytics" strategy="afterInteractive">
+                {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-PZ73QVCM4J');
+                `}
+            </Script>
+
+            {/* 2. User Custom GA (Tracks specifics if configured) */}
+            {data?.google_analytics_id && (
+                <>
+                    <Script
+                        src={`https://www.googletagmanager.com/gtag/js?id=${data.google_analytics_id}`}
+                        strategy="afterInteractive"
+                    />
+                    <Script id="google-analytics" strategy="afterInteractive">
+                        {`
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('js', new Date());
+                        gtag('config', '${data.google_analytics_id}');
+                        `}
+                    </Script>
+                </>
+            )}
+
             {/* Payment Modal */}
             {showPaymentModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -701,35 +736,68 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                     <section key="menu" id="menu" className="py-24 bg-gray-50 overflow-hidden">
                                         <div className="max-w-6xl mx-auto px-6">
                                             <h3 className="text-3xl font-bold mb-12 text-center">{titles.menu}</h3>
-                                            <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
-                                                {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
-                                                    <div
-                                                        key={idx}
-                                                        className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0
-                                                            ${isPortrait ? 'min-w-[280px] md:min-w-[340px]' : 'min-w-[300px] md:min-w-[350px]'}`}
-                                                    >
-                                                        {item.image_url ? (
-                                                            <div
-                                                                className={`${isPortrait ? 'h-[450px]' : 'h-64'} overflow-hidden bg-gray-200 cursor-pointer flex items-center justify-center`}
-                                                                onClick={() => setLightboxImage(item.image_url)}
-                                                            >
-                                                                <img
-                                                                    src={item.image_url}
-                                                                    alt={item.title}
-                                                                    className={`w-full h-full ${isPortrait ? 'object-cover' : 'object-contain'} transform group-hover:scale-105 transition duration-500`}
-                                                                />
+                                            {isPortrait ? (
+                                                <div className="flex flex-col gap-16">
+                                                    {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
+                                                        <div key={idx} className="w-full bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition group">
+                                                            {item.image_url ? (
+                                                                <div
+                                                                    className="w-full cursor-pointer relative"
+                                                                    onClick={() => setLightboxImage(item.image_url)}
+                                                                >
+                                                                    <img
+                                                                        src={item.image_url}
+                                                                        alt={item.title}
+                                                                        className="w-full h-auto object-contain max-h-[1200px]"
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition duration-300 flex items-center justify-center">
+                                                                        <div className="opacity-0 group-hover:opacity-100 bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold shadow-sm transform translate-y-4 group-hover:translate-y-0 transition">
+                                                                            크게 보기
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="h-64 bg-gray-100 flex items-center justify-center text-gray-400">
+                                                                    <span className="text-sm">이미지 없음</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="p-8">
+                                                                <h4 className="font-bold text-2xl mb-3 text-gray-900">{item.title}</h4>
+                                                                <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">{item.desc}</p>
                                                             </div>
-                                                        ) : (
-                                                            <div className={`${isPortrait ? 'h-[450px]' : 'h-48'} bg-gray-100 flex items-center justify-center text-gray-400`}><span className="text-sm">이미지 없음</span></div>
-                                                        )}
-                                                        <div className="p-6">
-                                                            <h4 className="font-bold text-xl mb-2">{item.title}</h4>
-                                                            <p className="text-gray-600 text-sm line-clamp-3">{item.desc}</p>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <p className="text-center text-gray-400 text-sm mt-4 md:hidden">좌우로 넘겨보세요</p>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide">
+                                                    {portfolio.map((item: { title: string; desc: string; image_url: string }, idx: number) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="min-w-[300px] md:min-w-[400px] bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group snap-center flex-shrink-0"
+                                                        >
+                                                            {item.image_url ? (
+                                                                <div
+                                                                    className="h-64 overflow-hidden bg-gray-200 cursor-pointer flex items-center justify-center"
+                                                                    onClick={() => setLightboxImage(item.image_url)}
+                                                                >
+                                                                    <img
+                                                                        src={item.image_url}
+                                                                        alt={item.title}
+                                                                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-500"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400"><span className="text-sm">이미지 없음</span></div>
+                                                            )}
+                                                            <div className="p-6">
+                                                                <h4 className="font-bold text-xl mb-2">{item.title}</h4>
+                                                                <p className="text-gray-600 text-sm line-clamp-3">{item.desc}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {!isPortrait && <p className="text-center text-gray-400 text-sm mt-4 md:hidden">좌우로 넘겨보세요</p>}
                                         </div>
                                     </section>
                                 ) : null;
@@ -915,6 +983,20 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                         </div>
                     )}
                 </div>
+                {/* Viral Loop: Powered by Banner for Free Users */}
+                {!isPaid && (
+                    <div className="mt-8 text-center pb-8 animate-bounce-subtle">
+                        <a
+                            href="https://simplesite.com" // Replace with actual landing page URL
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 bg-white/80 hover:bg-white backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-gray-100 transition transform hover:-translate-y-1 group"
+                        >
+                            <span className="text-xs font-medium text-gray-500 group-hover:text-gray-900">Powered by</span>
+                            <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">SimpleSite</span>
+                        </a>
+                    </div>
+                )}
             </footer>
             {/* Ownership badge as blue bar at 70% opacity */}
             {/* Ownership banner removed as per user request */}

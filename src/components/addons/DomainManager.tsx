@@ -50,26 +50,28 @@ export default function DomainManager({ siteId }: { siteId: string }) {
     };
 
     const handleRequest = async () => {
-        if (!confirm(`${result?.domain} 도메인을 구매 신청하시겠습니까?\n(⚠️ 구매 즉시 환불이 불가능합니다)`)) return;
+        if (!confirm(`${result?.domain} 도메인으로 연결을 신청하시겠습니까?\n(⚠️ 연결 신청 후 변경이 어렵습니다. 신중하게 선택해주세요.)`)) return;
 
         setRequesting(true);
 
-        const { error } = await supabase.from('site_addons').upsert({
-            site_id: siteId,
-            addon_type: 'domain',
-            is_active: false, // Pending admin approval/payment
-            config: {
-                domain: result?.domain,
-                status: 'pending_payment',
-                price: 35000,
-                requested_at: new Date().toISOString()
-            }
-        }, { onConflict: 'site_id, addon_type' });
+        // Update the EXISTING active addon with the domain request
+        const { error } = await supabase
+            .from('site_addons')
+            .update({
+                config: {
+                    ...currentAddon?.config,
+                    domain: result?.domain,
+                    status: 'requested', // Changed from pending_payment
+                    requested_at: new Date().toISOString()
+                }
+            })
+            .eq('site_id', siteId)
+            .eq('addon_type', 'domain');
 
         if (error) {
             alert('신청 실패: ' + error.message);
         } else {
-            alert('도메인 구매 신청이 접수되었습니다!\n최대 24시간 이내에 연결됩니다.');
+            alert('도메인 연결 신청이 접수되었습니다!\n관리자가 확인 후 (약 24시간 이내) 연결 처리됩니다.');
             loadStatus();
             setResult(null);
             setDomain('');
@@ -81,71 +83,77 @@ export default function DomainManager({ siteId }: { siteId: string }) {
 
     if (currentAddon) {
         const config = currentAddon.config || {};
-        const status = config.status || 'pending_payment';
+        const status = config.status; // status might be undefined if just paid
 
-        return (
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Search size={20} /> 도메인 연결 상태
-                </h3>
+        // If active but no domain requested yet (Just paid status)
+        if (!status && currentAddon.is_active) {
+            // Drop down to render Search UI
+        } else if (status) {
+            // Show Status UI if status exists
+            return (
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Search size={20} /> 도메인 연결 상태
+                    </h3>
 
-                {status === 'active' ? (
-                    <div className="bg-green-50 border border-green-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
-                        <CheckCircle className="text-green-600 mt-1 shrink-0" size={24} />
-                        <div>
-                            <h4 className="font-bold text-green-900 text-lg mb-1">도메인 연결이 완료되었습니다!</h4>
-                            <p className="text-green-800 mb-3">
-                                연결 도메인: <a href={`https://${config.domain}`} target="_blank" rel="noopener noreferrer" className="font-mono text-lg underline">{config.domain}</a>
-                            </p>
-                            <p className="text-sm text-green-700 italic">이제 전 세계에서 해당 주소로 접속 가능합니다.</p>
-                        </div>
-                    </div>
-                ) : status === 'cancelled' ? (
-                    <div className="bg-red-50 border border-red-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
-                        <ShieldAlert className="text-red-600 mt-1 shrink-0" size={24} />
-                        <div>
-                            <h4 className="font-bold text-red-900 text-lg mb-1">도메인 연결이 거절/취소되었습니다.</h4>
-                            <div className="bg-white/60 p-4 rounded-lg border border-red-200 mb-4">
-                                <p className="text-sm font-bold text-red-800 mb-1">거절/취소 사유:</p>
-                                <p className="text-red-700">{config.reason || '사유가 입력되지 않았습니다.'}</p>
-                            </div>
-                            <button
-                                onClick={async () => {
-                                    if (confirm('요청 내역을 초기화하고 다시 신청하시겠습니까?')) {
-                                        const { error } = await supabase.from('site_addons').delete().eq('id', currentAddon.id);
-                                        if (error) alert('삭제 실패: ' + error.message);
-                                        else loadStatus();
-                                    }
-                                }}
-                                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition"
-                            >
-                                다시 신청하기
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
-                        <Clock className="text-blue-600 mt-1 shrink-0" size={24} />
-                        <div>
-                            <h4 className="font-bold text-blue-900 text-lg mb-1">도메인 연결 진행 중입니다.</h4>
-                            <p className="text-blue-800 mb-3">
-                                신청 도메인: <b className="font-mono text-lg">{config.domain}</b>
-                            </p>
-                            <div className="bg-white/60 p-3 rounded-lg text-sm text-blue-700">
-                                <p>⏳ 최대 24시간 소요됩니다.</p>
-                                <p>관리자가 승인 및 연결 작업을 진행하고 있습니다.</p>
+                    {status === 'active' ? (
+                        <div className="bg-green-50 border border-green-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                            <CheckCircle className="text-green-600 mt-1 shrink-0" size={24} />
+                            <div>
+                                <h4 className="font-bold text-green-900 text-lg mb-1">도메인 연결이 완료되었습니다!</h4>
+                                <p className="text-green-800 mb-3">
+                                    연결 도메인: <a href={`https://${config.domain}`} target="_blank" rel="noopener noreferrer" className="font-mono text-lg underline">{config.domain}</a>
+                                </p>
+                                <p className="text-sm text-green-700 italic">이제 전 세계에서 해당 주소로 접속 가능합니다.</p>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        );
+                    ) : status === 'cancelled' ? (
+                        <div className="bg-red-50 border border-red-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                            <ShieldAlert className="text-red-600 mt-1 shrink-0" size={24} />
+                            <div>
+                                <h4 className="font-bold text-red-900 text-lg mb-1">도메인 연결이 거절/취소되었습니다.</h4>
+                                <div className="bg-white/60 p-4 rounded-lg border border-red-200 mb-4">
+                                    <p className="text-sm font-bold text-red-800 mb-1">거절/취소 사유:</p>
+                                    <p className="text-red-700">{config.reason || '사유가 입력되지 않았습니다.'}</p>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('요청 내역을 초기화하고 다시 신청하시겠습니까?')) {
+                                            const { error } = await supabase.from('site_addons').delete().eq('id', currentAddon.id);
+                                            if (error) alert('삭제 실패: ' + error.message);
+                                            else loadStatus();
+                                        }
+                                    }}
+                                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition"
+                                >
+                                    다시 신청하기
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4 animate-fadeIn">
+                            <Clock className="text-blue-600 mt-1 shrink-0" size={24} />
+                            <div>
+                                <h4 className="font-bold text-blue-900 text-lg mb-1">도메인 연결 진행 중입니다.</h4>
+                                <p className="text-blue-800 mb-3">
+                                    신청 도메인: <b className="font-mono text-lg">{config.domain}</b>
+                                </p>
+                                <div className="bg-white/60 p-3 rounded-lg text-sm text-blue-700">
+                                    <p>⏳ 최대 24시간 소요됩니다.</p>
+                                    <p>관리자가 승인 및 연결 작업을 진행하고 있습니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
     }
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Search size={20} /> 도메인 연결/구매
+                <Search size={20} /> 원하시는 도메인을 검색하고 신청해주세요.
             </h3>
 
             <div className="flex gap-2 mb-4">
@@ -180,8 +188,8 @@ export default function DomainManager({ siteId }: { siteId: string }) {
                             </p>
                             {result.available && (
                                 <div className="text-sm text-green-700 mt-2 space-y-1">
-                                    <p>✅ 가격: 35,000원 / 1년 (구매 즉시 유효)</p>
-                                    <p className="text-red-600 font-bold">🚫 도메인은 구매 후 환불이 절대 불가능합니다.</p>
+                                    <p>✅ 본 도메인은 구매일로부터 1년간 유효합니다.</p>
+                                    <p className="text-red-600 font-bold">🚫 도메인 구매 특성상 환불이 절대 불가능합니다.</p>
                                 </div>
                             )}
                         </div>
