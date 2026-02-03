@@ -38,8 +38,13 @@ export default function UserStatusBadge() {
     }
 
     return (
-        <Link href="/login" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition shadow-lg">
-            1개월 무료 체험
-        </Link>
+        <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                로그인
+            </Link>
+            <Link href="/login" className="text-sm font-bold bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition shadow-lg">
+                1개월 무료 체험
+            </Link>
+        </div>
     );
 }
