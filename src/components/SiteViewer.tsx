@@ -555,28 +555,14 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                 <link rel="stylesheet" href={fontLink} />
             )}
 
-            {/* 1. Global Admin GA (Tracks ALL sites) */}
-            <Script
-                src="https://www.googletagmanager.com/gtag/js?id=G-PZ73QVCM4J"
-                strategy="afterInteractive"
-            />
-            <Script id="global-analytics" strategy="afterInteractive">
-                {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', 'G-PZ73QVCM4J');
-                `}
-            </Script>
-
-            {/* 2. User Custom GA (Tracks specifics if configured) */}
-            {data?.google_analytics_id && (
+            {/* User Custom GA (Only if different from global admin GA) */}
+            {data?.google_analytics_id && data.google_analytics_id !== 'G-PZ73QVCM4J' && (
                 <>
                     <Script
                         src={`https://www.googletagmanager.com/gtag/js?id=${data.google_analytics_id}`}
                         strategy="afterInteractive"
                     />
-                    <Script id="google-analytics" strategy="afterInteractive">
+                    <Script id="user-google-analytics" strategy="afterInteractive">
                         {`
                         window.dataLayer = window.dataLayer || [];
                         function gtag(){dataLayer.push(arguments);}

@@ -16,6 +16,19 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="antialiased">
+        {/* Global Google Tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-PZ73QVCM4J"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics-global" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-PZ73QVCM4J');
+          `}
+        </Script>
         <Script src="https://cdn.portone.io/v2/browser-sdk.js" strategy="beforeInteractive" />
         {children}
       </body>
