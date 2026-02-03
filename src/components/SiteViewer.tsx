@@ -821,7 +821,7 @@ export default function SiteViewer({ initialData, id, expiresAt, isPaid }: SiteV
                                     </section>
                                 ) : null;
                             case 'qna':
-                                return activeAddons.includes('qna') ? <QnABoard key="qna" siteId={id} canManage={canManage} /> : null;
+                                return activeAddons.includes('qna') ? <QnABoard key="qna" siteId={id} canManage={canManage} title={titles.qna} /> : null;
                             case 'contact':
                                 return (
                                     <section key="contact" id="contact" className="py-24 px-6 lg:pb-32 bg-gray-50">

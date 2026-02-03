@@ -13,7 +13,7 @@ type Post = {
     is_secret: boolean;
 };
 
-export default function QnABoard({ siteId, canManage }: { siteId: string, canManage: boolean }) {
+export default function QnABoard({ siteId, canManage, title }: { siteId: string, canManage: boolean, title?: string }) {
     const [posts, setPosts] = useState<Post[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [newPost, setNewPost] = useState({ title: '', content: '', author: '익명', isSecret: false, password: '' });
@@ -70,7 +70,7 @@ export default function QnABoard({ siteId, canManage }: { siteId: string, canMan
             <div className="max-w-4xl mx-auto px-6">
                 <div className="flex justify-between items-end mb-8">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">Q&A 게시판</h2>
+                        <h2 className="text-3xl font-bold mb-2">{title || 'Q&A 게시판'}</h2>
                         <p className="text-gray-500">궁금한 점을 남겨주세요.</p>
                     </div>
                     <button

@@ -172,7 +172,6 @@ function HomeContent() {
         menu: 'Menu / Portfolio',
         reviews: 'Customer Reviews',
         contact: 'Contact & Location',
-        inquiry: '문의하기',
         qna: 'Q&A'
     });
 
@@ -195,14 +194,13 @@ function HomeContent() {
     const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${fontNames.join(':wght@400;700&family=')}:wght@400;700&display=swap`;
 
     // Section Order State
-    const [sectionOrder, setSectionOrder] = useState<string[]>(['hero', 'about', 'menu', 'reviews', 'qna', 'inquiry', 'contact']);
+    const [sectionOrder, setSectionOrder] = useState<string[]>(['hero', 'about', 'menu', 'reviews', 'qna', 'contact']);
     const SECTION_LABELS: Record<string, string> = {
         hero: '메인(Hero) 섹션',
         about: '소개(About) 섹션',
         menu: '메뉴/포트폴리오',
         reviews: '고객 후기',
         qna: 'Q&A 게시판 (애드온)',
-        inquiry: '문의하기 폼 (애드온)',
         contact: '연락처/지도'
     };
 
@@ -1033,7 +1031,7 @@ function HomeContent() {
                                 </div>
                             ))}
                             <div className="mt-2 text-[11px] text-blue-600 bg-blue-50 p-2 rounded">
-                                * &apos;Q&A&apos;와 &apos;문의하기&apos;는 애드온 구매 후 표시됩니다.
+                                * &apos;Q&A&apos; 섹션은 애드온 구매 또는 체험 활성화 후 표시됩니다.
                             </div>
                         </div>
 
@@ -1072,15 +1070,6 @@ function HomeContent() {
                                     type="text"
                                     value={sectionTitles.contact}
                                     onChange={(e) => setSectionTitles({ ...sectionTitles, contact: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">문의하기 섹션 (애드온)</label>
-                                <input
-                                    type="text"
-                                    value={sectionTitles.inquiry}
-                                    onChange={(e) => setSectionTitles({ ...sectionTitles, inquiry: e.target.value })}
                                     className="w-full px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                 />
                             </div>
