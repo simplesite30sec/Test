@@ -59,6 +59,13 @@ export default function DashboardPage() {
     const [couponMessage, setCouponMessage] = useState('');
     const [couponValid, setCouponValid] = useState(false);
 
+    // Manual Payment States
+    const [depositName, setDepositName] = useState('');
+    const [depositContact, setDepositContact] = useState('');
+    const [receiptType, setReceiptType] = useState<'none' | 'personal' | 'business'>('none');
+    const [receiptInfo, setReceiptInfo] = useState('');
+    const [isExtension, setIsExtension] = useState(false);
+
     const availableAddons = [
         { id: 'qna', name: 'Q&A 게시판', price: 3000, desc: '비밀글 기능이 포함된 질문 게시판입니다.' },
         { id: 'domain', name: '나만의 도메인 구매', price: 35000, desc: '.com / .net 등 도메인을 구매하고 연결합니다.' }
@@ -141,6 +148,7 @@ export default function DashboardPage() {
 
         // Paid sites -> Show payment modal
         setSelectedAddon(addon);
+        setIsExtension(false);
         setShowPaymentModal(true);
         setCouponCode('');
         setCouponMessage('');
@@ -224,98 +232,84 @@ export default function DashboardPage() {
         }
     };
 
-    // Complete addon purchase
-    const handleCompletePurchase = async () => {
-        if (!selectedSiteId || !selectedAddon) return;
+    // Complete purchase (Coupon or Manual Bank Transfer Request)
+    const handleSubmitPaymentRequest = async () => {
+        if (!selectedSiteId || !selectedAddon || !user) return;
 
-        // Validate payment method
-        if (paymentMethod === 'coupon' && !couponValid) {
-            alert('유효한 쿠폰을 입력해주세요.');
-            return;
-        }
-
-        try {
-            const { error } = await supabase.from('site_addons').upsert({
-                site_id: selectedSiteId,
-                addon_type: selectedAddon.id,
-                config: {},
-                is_active: true,
-                is_purchased: true,
-                purchase_type: paymentMethod,
-                purchased_at: new Date().toISOString(),
-                coupon_code: paymentMethod === 'coupon' ? couponCode : null
-            }, { onConflict: 'site_id,addon_type' });
-
-            if (!error) {
-                // Securely increment coupon usage count via RPC
-                if (paymentMethod === 'coupon') {
-                    await supabase.rpc('increment_coupon_usage', { coupon_code_param: couponCode });
-                }
-
-                alert(paymentMethod === 'coupon' ? '쿠폰으로 구매 완료!' : '결제 완료! (모의 결제)');
-                setSiteAddons([...siteAddons, selectedAddon.id]);
-                setPurchasedAddons(prev => ({
-                    ...prev,
-                    [selectedAddon.id]: {
-                        type: paymentMethod,
-                        purchase_type: paymentMethod,
-                        coupon_code: paymentMethod === 'coupon' ? couponCode : undefined
-                    }
-                }));
-                setAllSiteAddons(prev => ({
-                    ...prev,
-                    [selectedSiteId]: Array.from(new Set([...(prev[selectedSiteId] || []), selectedAddon.id]))
-                }));
-                setShowPaymentModal(false);
-            } else {
-                alert('구매 실패: ' + error.message);
-            }
-        } catch (e) {
-            console.error(e);
-            alert('구매 중 오류가 발생했습니다.');
-        }
-    };
-
-    // PortOne Payment for Site Subscription
-    const handleSitePayment = async (siteId: string, siteName: string) => {
-        const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "store-c539d171-6af5-4238-be7d-9aea0279ae15";
-        const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "channel-key-9355d9b2-e369-4737-9f64-1623f95ae009";
-
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const PortOne = (window as any).PortOne;
-            if (!PortOne) {
-                alert("결제 SDK를 로드하고 있습니다. 잠시 후 다시 시도해주세요.");
+        if (paymentMethod === 'coupon') {
+            if (!couponValid) {
+                alert('유효한 쿠폰을 입력해주세요.');
                 return;
             }
 
-            const paymentId = `PAY-SITE-${siteId}-${Date.now()}`;
-            const response = await PortOne.requestPayment({
-                storeId: storeId,
-                channelKey: channelKey,
-                paymentId: paymentId,
-                orderName: `라이트 사이트 1년권: ${siteName || '나의 홈페이지'}`,
-                totalAmount: 9900,
-                currency: "CURRENCY_KRW",
-                payMethod: "EASY_PAY",
-                customer: {
-                    fullName: user?.email?.split('@')[0] || "고객",
-                    email: user?.email || "customer@example.com",
-                },
-                redirectUrl: `${window.location.origin}/payment/success?id=${siteId}`
+            try {
+                const { error } = await supabase.from('site_addons').upsert({
+                    site_id: selectedSiteId,
+                    addon_type: selectedAddon.id,
+                    config: {},
+                    is_active: true,
+                    is_purchased: true,
+                    purchase_type: 'coupon',
+                    purchased_at: new Date().toISOString(),
+                    coupon_code: couponCode
+                }, { onConflict: 'site_id,addon_type' });
+
+                if (!error) {
+                    await supabase.rpc('increment_coupon_usage', { coupon_code_param: couponCode });
+                    alert('쿠폰으로 구매 완료!');
+                    if (selectedAddon.id !== 'site_extension') {
+                        setSiteAddons([...siteAddons, selectedAddon.id]);
+                        setPurchasedAddons(prev => ({
+                            ...prev,
+                            [selectedAddon.id]: { type: 'coupon', purchase_type: 'coupon', coupon_code: couponCode }
+                        }));
+                    }
+                    setShowPaymentModal(false);
+                } else {
+                    alert('구매 실패: ' + error.message);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('구매 중 오류가 발생했습니다.');
+            }
+        } else {
+            // Manual Bank Transfer Request
+            if (!depositName || !depositContact) {
+                alert('입금자명과 연락처를 입력해주세요.');
+                return;
+            }
+
+            const { error } = await supabase.from('payment_requests').insert({
+                user_id: user.id,
+                site_id: selectedSiteId,
+                addon_type: selectedAddon.id,
+                amount: selectedAddon.price,
+                deposit_name: depositName,
+                contact: depositContact,
+                receipt_type: receiptType,
+                receipt_info: receiptType !== 'none' ? receiptInfo : null,
+                status: 'pending'
             });
 
-            if (response) {
-                if (response.code != null) {
-                    alert(`결제 실패: ${response.message}`);
-                } else {
-                    window.location.href = `/payment/success?id=${siteId}&paymentId=${response.paymentId || paymentId}`;
-                }
+            if (!error) {
+                alert('입금 확인 요청이 완료되었습니다!\n\n입금 확인 후 1시간 이내에 기능이 구동됩니다. 감사합니다!');
+                setShowPaymentModal(false);
+            } else {
+                alert('요청 실패: ' + error.message);
             }
-        } catch (e) {
-            console.error(e);
-            alert("결제 요청 중 오류가 발생했습니다.");
         }
+    };
+
+    const handleSitePayment = async (siteId: string, siteName: string) => {
+        setSelectedSiteId(siteId);
+        setSelectedAddon({ id: 'site_extension', name: `라이트 사이트 1년권: ${siteName}`, price: 9900 });
+        setIsExtension(true);
+        setShowPaymentModal(true);
+        setPaymentMethod('card');
+        setDepositName('');
+        setDepositContact('');
+        setReceiptType('none');
+        setReceiptInfo('');
     };
 
 
@@ -884,7 +878,7 @@ export default function DashboardPage() {
                         <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-fadeIn">
                             <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
                                 <h3 className="text-xl font-bold flex items-center gap-2">
-                                    🛍️ 애드온 구매
+                                    {isExtension ? '⏳ 사이트 이용 기간 연장' : '🛍️ 애드온 구매'}
                                 </h3>
                                 <p className="text-blue-100 text-sm mt-1">{selectedAddon.name}</p>
                             </div>
@@ -911,8 +905,8 @@ export default function DashboardPage() {
                                                 className="w-4 h-4"
                                             />
                                             <div className="flex-1">
-                                                <p className="font-bold text-gray-900">카드 결제</p>
-                                                <p className="text-xs text-gray-500">{selectedAddon.price.toLocaleString()}원 (모의 결제)</p>
+                                                <p className="font-bold text-gray-900">무통장 입금</p>
+                                                <p className="text-xs text-gray-500">직접 송금 및 승인 요청</p>
                                             </div>
                                         </label>
 
@@ -932,6 +926,67 @@ export default function DashboardPage() {
                                         </label>
                                     </div>
                                 </div>
+
+                                {/* Bank Info and Deposit Fields */}
+                                {paymentMethod === 'card' && (
+                                    <div className="mb-6 space-y-4">
+                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                            <p className="text-[11px] text-indigo-500 font-bold mb-1 uppercase">입금 계좌 안내</p>
+                                            <p className="text-lg font-bold text-indigo-900">토스뱅크 1000-0243-3758</p>
+                                            <p className="text-sm font-medium text-indigo-700">예금주: 서인명</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 mb-1">입금자명</label>
+                                                <input
+                                                    type="text"
+                                                    value={depositName}
+                                                    onChange={(e) => setDepositName(e.target.value)}
+                                                    placeholder="실명 입력"
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 mb-1">연락처</label>
+                                                <input
+                                                    type="text"
+                                                    value={depositContact}
+                                                    onChange={(e) => setDepositContact(e.target.value)}
+                                                    placeholder="010-0000-0000"
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 mb-2">증빙 서류 신청</label>
+                                            <div className="flex gap-2">
+                                                {(['none', 'personal', 'business'] as const).map(type => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setReceiptType(type)}
+                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${receiptType === type ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                                                    >
+                                                        {type === 'none' ? '미발행' : type === 'personal' ? '현금영수증' : '사업자지출증빙'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {receiptType !== 'none' && (
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={receiptInfo}
+                                                    onChange={(e) => setReceiptInfo(e.target.value)}
+                                                    placeholder={receiptType === 'personal' ? '휴대폰 번호 입력' : '사업자 등록 번호 입력'}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Coupon Input (only shown when coupon is selected) */}
                                 {paymentMethod === 'coupon' && (
@@ -984,12 +1039,17 @@ export default function DashboardPage() {
                                         취소
                                     </button>
                                     <button
-                                        onClick={handleCompletePurchase}
+                                        onClick={handleSubmitPaymentRequest}
                                         className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition shadow-md"
                                     >
-                                        구매하기
+                                        {paymentMethod === 'coupon' ? '구매하기' : '입금 확인 요청'}
                                     </button>
                                 </div>
+                                {paymentMethod === 'card' && (
+                                    <p className="mt-4 text-[10px] text-gray-400 text-center">
+                                        ※ 입금 확인은 영업시간 내 1시간 이내에 처리됩니다.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
