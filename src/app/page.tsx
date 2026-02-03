@@ -118,6 +118,7 @@ export default function LandingPage() {
                 <p><span className="font-bold">사업자등록번호:</span> 794-05-02369 | <span className="font-bold">통신판매업신고번호:</span> 2022-경기시흥-2304</p>
                 <p><span className="font-bold">주소:</span> 경기도 시흥시 능곡서로27 403동 302호</p>
                 <p><span className="font-bold">고객센터:</span> 010-2216-9054 | inmyeong320@naver.com</p>
+                <p className="mt-2 text-[10px] text-gray-400">비실물서비스 - 결제 진행 시 무료 제공 기간 + 1년동안 이용 가능합니다.</p>
               </div>
               <div className="md:text-right flex items-end justify-start md:justify-end">
                 <p>&copy; 2026 SimpleSite. All rights reserved.</p>
