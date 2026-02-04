@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import { createClient } from '@/utils/supabase/client';
 
+export const runtime = 'edge';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createClient();
     const baseUrl = 'https://30site.com';
