@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.93.3",
+    "googleapis": "^171.2.0",
     "lucide-react": "^0.563.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -24,11 +26,10 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
-    "@cloudflare/next-on-pages": "^1.13.16",
-    "vercel": "^50.9.6",
     "shx": "^0.4.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "vercel": "^50.9.6"
   },
   "engines": {
     "node": ">=18.0.0"

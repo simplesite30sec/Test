@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://30site.com'),
   title: "SimpleSite - 30초만에 홈페이지 만들기",
   description: "디자인 몰라도 괜찮습니다. 빈칸만 채우면 완벽한 홈페이지가 완성됩니다.",
+  verification: {
+    google: "hbMQTAfd41KsA68UXYkSWj7o6tvyTqXzhPQ51TGavTs",
+  },
 };
 
 export default function RootLayout({

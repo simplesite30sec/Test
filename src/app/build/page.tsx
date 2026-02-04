@@ -229,7 +229,7 @@ function HomeContent() {
 
                 if (siteData) {
                     setIsPaid(siteData.is_paid || false);
-                    if (siteData.section_order) setSectionOrder(siteData.section_order as string[]);
+                    if (siteData.section_order) setSectionOrder((siteData.section_order as string[]).filter(s => s !== 'inquiry'));
                     if (siteData.section_titles) setSectionTitles(siteData.section_titles as typeof sectionTitles);
                     if (siteData.font_family) setFontFamily(siteData.font_family);
                     if (siteData.hero_height) setHeroHeight(siteData.hero_height as 'full' | 'medium' | 'small');
@@ -572,6 +572,13 @@ function HomeContent() {
                 } else {
                     router.push(targetUrl);
                 }
+
+                // Trigger Google Indexing API (Fire and forget)
+                fetch('/api/seo/index', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: `${window.location.origin}${targetUrl}` })
+                }).catch(err => console.error('Indexing trigger failed:', err));
             } catch (dbError) {
                 console.error("DB Operation Failed, switching to Mock Mode", dbError);
                 let errorMessage = 'Unknown error';
