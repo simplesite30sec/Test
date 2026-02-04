@@ -1,5 +1,5 @@
-import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
+import * as jose from 'jose';
 
 export const runtime = 'edge';
 
@@ -20,20 +20,47 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Indexing API credentials not configured' }, { status: 500 });
         }
 
-        const jwtClient = new google.auth.JWT({
-            email: clientEmail,
-            key: privateKey,
-            scopes: ['https://www.googleapis.com/auth/indexing']
+        // 1. Get Access Token using jose (Edge compatible)
+        const iat = Math.floor(Date.now() / 1000);
+        const exp = iat + 3600;
+
+        const jwt = await new jose.SignJWT({
+            iss: clientEmail,
+            scope: 'https://www.googleapis.com/auth/indexing',
+            aud: 'https://oauth2.googleapis.com/token',
+            exp,
+            iat,
+        })
+            .setProtectedHeader({ alg: 'RS256' })
+            .sign(await jose.importPKCS8(privateKey, 'RS256'));
+
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                assertion: jwt,
+            }),
         });
 
-        await jwtClient.authorize();
+        const tokenData = await tokenResponse.json();
 
+        if (!tokenData.access_token) {
+            console.error('Token acquisition failed:', tokenData);
+            return NextResponse.json({ error: 'Failed to acquire access token', details: tokenData }, { status: 500 });
+        }
+
+        const accessToken = tokenData.access_token;
+
+        // 2. Call Indexing API
         const endpoint = 'https://indexing.googleapis.com/v3/urlNotifications:publish';
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwtClient.credentials.access_token}`
+                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
                 url: url,
