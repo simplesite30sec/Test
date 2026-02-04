@@ -559,7 +559,7 @@ function HomeContent() {
                                 email: user?.email,
                                 has_used_trial: true
                             });
-                        } catch (e) { }
+                        } catch { }
                     }
                 }
 

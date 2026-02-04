@@ -18,13 +18,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Indexing API credentials not configured' }, { status: 500 });
         }
 
-        const jwtClient = new google.auth.JWT(
-            clientEmail,
-            undefined,
-            privateKey,
-            ['https://www.googleapis.com/auth/indexing'],
-            undefined
-        );
+        const jwtClient = new google.auth.JWT({
+            email: clientEmail,
+            key: privateKey,
+            scopes: ['https://www.googleapis.com/auth/indexing']
+        });
 
         await jwtClient.authorize();
 
@@ -44,8 +42,9 @@ export async function POST(req: Request) {
         const data = await response.json();
 
         return NextResponse.json({ success: true, data });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
         console.error('Indexing error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
