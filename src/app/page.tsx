@@ -1,8 +1,15 @@
 import Link from 'next/link';
+import { Metadata } from 'next';
 import { Check, Star, Zap, Shield, Layout, Smartphone } from 'lucide-react';
 import UserStatusBadge from '@/components/UserStatusBadge';
 
 export const dynamic = 'force-static';
+
+export const metadata: Metadata = {
+  verification: {
+    google: "hbMQTAfd41KsA68UXYkSWj7o6tvyTqXzhPQ51TGavTs",
+  },
+};
 
 export default function LandingPage() {
   return (
